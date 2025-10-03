@@ -21,21 +21,26 @@
     </div>
   </div>
 
-  <!-- Navigation bar -->
+  <!-- Navbar -->
   <nav class="navbar">
     <button id="prevPage">⬅ Prev</button>
     <span id="pageInfo"></span>
     <button id="nextPage">Next ➡</button>
     <button id="fullscreen">⛶</button>
     <button id="soundToggle">🔊</button>
-    
-    <!-- Go to page -->
-    <input type="number" id="gotoPage" placeholder="Page #" min="1" />
-    <button id="gotoBtn">Go</button>
   </nav>
 
-  <!-- Flipbook container -->
+  <!-- Flipbook -->
   <div id="flipbook" class="flipbook"></div>
+
+  <!-- Resume Popup -->
+  <div id="resumePopup" class="resume-popup">
+    <div class="popup-content">
+      <p id="resumeText">Continue where you left off?</p>
+      <button id="resumeYes">Yes</button>
+      <button id="resumeNo">No</button>
+    </div>
+  </div>
 
   <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
