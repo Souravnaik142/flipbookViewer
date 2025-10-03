@@ -36,7 +36,7 @@ async function renderPages() {
     await renderPage(i, canvas);
     pages.push(wrapper);
 
-    // ✅ add thumbnail
+    // ✅ Add thumbnail
     const thumb = document.createElement("img");
     thumb.src = canvas.toDataURL("image/png");
     thumb.dataset.page = i;
