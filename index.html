@@ -1,56 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Flipbook</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Flipbook Viewer</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+
+  <!-- StPageFlip -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css" />
+  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
 <body>
-  <!-- Controls -->
-  <div id="controls">
-    <button id="prevPage">⬅ Prev</button>
-    <span id="pageInfo">0 / 0</span>
-    <button id="nextPage">Next ➡</button>
-    <button id="resetView">🔄 Reset View</button>
-    <button id="helpBtn">❓ Help</button>
-  </div>
-
-  <!-- Help overlay -->
-  <div id="helpOverlay">
-    <div id="helpContent">
-      <h2>📖 Flipbook Controls</h2>
-      <ul>
-        <li>⬅ / ➡ : Flip pages</li>
-        <li>+ / - : Zoom in / out</li>
-        <li>0 : Reset view</li>
-        <li>🖱️ Mouse wheel : Zoom</li>
-        <li>🖱️ Drag : Pan when zoomed</li>
-        <li>📱 Pinch : Zoom on touch devices</li>
-        <li>📱 One finger drag : Pan</li>
-        <li>Double-click / Double-tap : Reset view</li>
-      </ul>
-      <button id="closeHelp">Got it!</button>
+  <!-- Loader -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <div id="loaderText">Loading your book...</div>
     </div>
   </div>
 
-  <!-- Zoom wrapper -->
-  <div id="zoomWrapper">
-    <div id="flipbook"></div>
-  </div>
+  <!-- Navigation bar -->
+  <nav class="navbar">
+    <button id="prevPage">⬅ Prev</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">Next ➡</button>
+    <button id="zoomIn">➕</button>
+    <button id="zoomOut">➖</button>
+    <button id="fullscreen">⛶</button>
+    <button id="soundToggle">🔊</button>
+  </nav>
 
-  <!-- Loader -->
-  <div id="loader">Loading your book...</div>
+  <!-- Flipbook container -->
+  <div id="flipbook" class="flipbook"></div>
 
+  <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
 
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
-
-  <!-- PageFlip -->
-  <script src="https://cdn.jsdelivr.net/npm/stpageflip@2.0.7/dist/page-flip.browser.min.js"></script>
-
-  <!-- Our Script -->
   <script src="script.js"></script>
 </body>
 </html>
+
+
