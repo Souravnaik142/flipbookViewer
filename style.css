@@ -2,76 +2,111 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #111;
-  color: #fff;
+  color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
   height: 100vh;
+  overflow: hidden;
 }
 
-.navbar {
-  background: #222;
-  padding: 10px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  width: 100%;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.flipbook {
-  margin-top: 10px;
-  width: 90%;
-  height: 85%;
-}
-
-.page {
-  background: white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-.pdf-page {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* Loader Overlay */
+/* Loader */
 .loader-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
+  background: #111;
   display: flex;
-  align-items: center;
   justify-content: center;
-  flex-direction: column;
-  z-index: 9999;
-  opacity: 1;
-  transition: opacity 0.8s ease;
-}
-.loader-overlay.fade-out {
-  opacity: 0;
-  pointer-events: none;
+  align-items: center;
+  z-index: 999;
 }
 .loader-content {
   text-align: center;
+  color: white;
 }
 .spinner {
+  border: 6px solid #444;
+  border-top: 6px solid #fff;
+  border-radius: 50%;
   width: 50px;
   height: 50px;
-  border: 6px solid #444;
-  border-top: 6px solid #00ffcc;
-  border-radius: 50%;
+  margin: auto;
   animation: spin 1s linear infinite;
-  margin: 20px auto;
 }
 @keyframes spin {
   100% { transform: rotate(360deg); }
 }
-#loaderText {
-  font-size: 18px;
+
+/* Navbar */
+.navbar {
+  display: flex;
+  gap: 10px;
+  margin: 10px;
+}
+.navbar button {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.navbar button:hover {
+  background: #555;
+}
+
+/* Reset button smart visibility */
+#resetView {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  position: relative;
+}
+#resetView.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tooltip */
+#resetView::after {
+  content: "Reset View";
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+#resetView:hover::after {
+  opacity: 1;
+}
+
+/* Zoom wrapper */
+.zoom-wrapper {
   margin-top: 10px;
+  width: 90%;
+  height: 85%;
+  overflow: hidden;
+  touch-action: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #111;
+}
+.zoom-wrapper > .flipbook {
+  transform-origin: center center;
+  transition: transform 0.2s ease;
+  will-change: transform;
+  cursor: grab;
+}
+.zoom-wrapper > .flipbook.dragging {
+  cursor: grabbing;
 }
