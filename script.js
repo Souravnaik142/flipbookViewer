@@ -12,7 +12,7 @@ const loaderText = document.getElementById("loaderText");
 const thumbnailStrip = document.getElementById("thumbnailStrip");
 const thumbToggle = document.getElementById("thumbToggle");
 
-// ✅ Allow body to be focusable for keyboard events
+// ✅ Make body focusable and grab focus
 document.body.setAttribute("tabindex", "0");
 document.body.focus();
 
@@ -173,8 +173,8 @@ function toggleSound() {
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 }
 
-// ✅ Keyboard navigation
-document.addEventListener("keydown", (e) => {
+// ✅ Keyboard navigation (always on window)
+window.addEventListener("keydown", (e) => {
   if (!pageFlip) return;
 
   switch (e.key) {
@@ -210,18 +210,8 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// ✅ Prevent buttons & strip from "stealing" arrow keys
-document.querySelectorAll("button, #thumbnailStrip").forEach(el => {
-  el.addEventListener("keydown", (e) => {
-    if (["ArrowLeft", "ArrowRight", "+", "-", "=", "f", "F", "m", "M", "t", "T"].includes(e.key)) {
-      e.preventDefault();   // stop element from using it
-      document.body.focus(); // restore focus
-      // Re-dispatch so global listener still works
-      document.dispatchEvent(new KeyboardEvent("keydown", e));
-    }
-  });
-
-  // Also refocus body after any click
+// ✅ Ensure body regains focus after any UI click
+document.querySelectorAll("button, #thumbnailStrip img").forEach(el => {
   el.addEventListener("click", () => {
     setTimeout(() => document.body.focus(), 50);
   });
