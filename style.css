@@ -14,50 +14,30 @@ body {
   padding: 10px;
   display: flex;
   gap: 10px;
-  align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   width: 100%;
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
-.navbar button {
-  background: #333;
-  color: #fff;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.navbar button:hover {
-  background: #00ffcc;
-  color: #111;
-}
-
 .navbar input {
-  padding: 5px;
+  padding: 4px 6px;
   border-radius: 4px;
-  border: 1px solid #555;
-  background: #111;
-  color: white;
-}
-.navbar input::placeholder {
-  color: #aaa;
+  border: none;
 }
 
 .flipbook {
   margin-top: 10px;
   width: 90%;
-  height: 70%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 85%;
 }
 
 .page {
   background: white;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  position: relative;
 }
 
 .pdf-page {
@@ -102,63 +82,4 @@ body {
 #loaderText {
   font-size: 18px;
   margin-top: 10px;
-}
-
-/* Thumbnail Bar */
-.thumbnail-bar {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  background: #1a1a1a;
-  width: 100%;
-  padding: 8px;
-  border-top: 2px solid #333;
-  max-height: 120px;
-  transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
-}
-.thumbnail-bar::-webkit-scrollbar {
-  display: none;
-}
-.thumbnail-bar.hidden {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  padding: 0;
-  border: none;
-}
-.thumbnail {
-  flex: 0 0 auto;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border 0.3s ease;
-  background: #fff;
-  padding: 2px;
-  border-radius: 4px;
-}
-.thumbnail.active {
-  border: 2px solid #00ffcc;
-}
-.thumbnail canvas {
-  display: block;
-  width: 60px;
-  height: auto;
-}
-
-/* Mobile: hide thumbnails by default, show via .show */
-@media (max-width: 768px) {
-  .thumbnail-bar {
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    padding: 0;
-    border: none;
-  }
-  .thumbnail-bar.show {
-    max-height: 120px;
-    opacity: 1;
-    padding: 8px;
-    border-top: 2px solid #333;
-  }
 }
