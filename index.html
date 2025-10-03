@@ -14,7 +14,6 @@
   <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 
   <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
   <style>
     body {
       margin: 0;
@@ -24,6 +23,9 @@
       background: #2d2d2d;
       color: white;
       font-family: Arial, sans-serif;
+    }
+    h2 {
+      margin-top: 10px;
     }
     #flipbook {
       width: 100%;
@@ -37,6 +39,7 @@
       gap: 10px;
       justify-content: center;
       align-items: center;
+      flex-wrap: wrap;
     }
     button {
       padding: 6px 12px;
@@ -59,10 +62,56 @@
       height: auto;
       display: block;
     }
+
+    /* Loader Overlay */
+    .loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.8s ease; /* smooth fade */
+    }
+    .loader-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loader-content {
+      text-align: center;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 6px solid #444;
+      border-top: 6px solid #00ffcc;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+    #loaderText {
+      font-size: 18px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <h2>📖 Flipbook Viewer</h2>
+
+  <!-- Loader -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <p id="loaderText">Loading your book...</p>
+    </div>
+  </div>
 
   <!-- Flipbook container -->
   <div id="flipbook"></div>
@@ -87,11 +136,13 @@
         totalPages = 0,
         scale = 1.2,
         soundOn = true,
-        pageFlip; // keep global reference
+        pageFlip;
 
     const pageInfo = document.getElementById("pageInfo");
     const flipSound = document.getElementById("flipSound");
     const flipbook = document.getElementById("flipbook");
+    const loader = document.getElementById("loader");
+    const loaderText = document.getElementById("loaderText");
 
     // Load PDF
     pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
@@ -113,12 +164,15 @@
 
         await renderPage(i, canvas);
         pages.push(wrapper);
+
+        // ✅ Update loader progress
+        loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
       }
 
       // Reset container
       flipbook.innerHTML = "";
 
-      // Init or reload PageFlip
+      // Init PageFlip
       pageFlip = new St.PageFlip(flipbook, {
         width: 500,
         height: 700,
@@ -141,6 +195,12 @@
         updatePageInfo(e.data + 1);
         if (soundOn) flipSound.play();
       });
+
+      // ✅ Fade out loader
+      loader.classList.add("fade-out");
+      setTimeout(() => {
+        loader.style.display = "none";
+      }, 800);
     }
 
     // Render single PDF page
