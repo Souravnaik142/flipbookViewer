@@ -1,44 +1,117 @@
-:root{
-  --bg:#111;
-  --panel:#222;
-  --muted:#666;
-  --accent:#00ffcc;
-  --text:#fff;
+body {
+  margin: 0;
+  padding: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
-.navbar{
-  display:flex;gap:8px;align-items:center;justify-content:center;padding:10px;background:var(--panel);
-  position:sticky;top:0;z-index:1000;
+#controls {
+  margin: 10px;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
-.navbar button{background:#333;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
-.navbar button:hover{background:#444}
 
-.zoom-wrapper{
-  width:90%;height:calc(100vh - 96px);margin:14px auto 28px;display:flex;align-items:center;justify-content:center;
-  overflow:hidden;touch-action:none;background:transparent;
+#controls button {
+  padding: 5px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+  background: #333;
+  color: white;
+  transition: 0.2s;
 }
-.zoom-wrapper > .flipbook{transform-origin:center center;transition:transform .18s ease;will-change:transform;cursor:grab}
-.zoom-wrapper > .flipbook.dragging{cursor:grabbing}
+#controls button:hover {
+  background: #555;
+}
 
-/* loader */
-.loader-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.9);z-index:9999;opacity:1;transition:opacity .6s}
-.loader-overlay.fade-out{opacity:0;pointer-events:none}
-.loader-content{text-align:center}
-.spinner{width:48px;height:48px;border-radius:50%;border:5px solid #444;border-top-color:var(--accent);animation:spin 1s linear infinite;margin:8px auto}
-@keyframes spin{100%{transform:rotate(360deg)}}
-#loaderText{color:var(--text);margin-top:8px;font-size:15px}
+#zoomWrapper {
+  width: 90vw;
+  height: 90vh;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  touch-action: none;
+  background: #111;
+  transform-origin: center center;
+  position: relative;
+}
 
-/* error */
-.error-box{position:fixed;left:12px;right:12px;top:72px;background:#7a1f1f;color:#fff;padding:12px;border-radius:8px;z-index:11000}
+#flipbook {
+  width: 100%;
+  height: 100%;
+}
 
-/* reset button visibility + tooltip */
-#resetView{opacity:0;pointer-events:none;transition:opacity .3s}
-#resetView.visible{opacity:1;pointer-events:auto}
-#resetView{position:relative}
-#resetView::after{content:"Reset View";position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);padding:6px 8px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .2s}
-#resetView:hover::after{opacity:1}
+.page img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
 
-/* page content fallback sizing */
-.flipbook .page img{display:block;width:100%;height:auto}
+/* Loader */
+#loader {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 20px;
+  z-index: 2000;
+}
+
+/* Help overlay */
+#helpOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  color: white;
+}
+
+#helpContent {
+  background: #222;
+  padding: 20px 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: left;
+  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+}
+
+#helpContent h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+#helpContent ul {
+  padding-left: 20px;
+  margin: 15px 0;
+}
+
+#helpContent button {
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 14px;
+  background: #444;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+#helpContent button:hover {
+  background: #666;
+}
