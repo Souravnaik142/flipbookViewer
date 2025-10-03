@@ -1,12 +1,14 @@
 // Firebase Config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_MSG_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBzEhgiJXph4CbXBBwxcNU3MjDCHc0rWZo",
+  authDomain: "flipbook-7540.firebaseapp.com",
+  projectId: "flipbook-7540",
+  storageBucket: "flipbook-7540.firebasestorage.app",
+  messagingSenderId: "430421789223",
+  appId: "1:430421789223:web:fdca22655543a637bf9c02",
+  measurementId: "G-2T9KF0DXL5"
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
