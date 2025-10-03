@@ -7,6 +7,7 @@ body {
   flex-direction: column;
   align-items: center;
   height: 100vh;
+  overflow: hidden;
 }
 
 .navbar {
@@ -15,32 +16,13 @@ body {
   display: flex;
   gap: 10px;
   justify-content: flex-start;
-  align-items: center;
   width: 100%;
   position: sticky;
   top: 0;
   z-index: 1000;
 }
-
-#welcomeUser {
-  margin-left: auto;
-  font-size: 14px;
-  font-weight: normal;
-  color: #aaa;
-}
-
-#logoutBtn {
-  background: #e74c3c;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-left: 10px;
-  font-weight: bold;
-}
-#logoutBtn:hover {
-  background: #c0392b;
+.navbar .spacer {
+  flex: 1;
 }
 
 .flipbook {
@@ -65,7 +47,6 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.9);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -77,9 +58,6 @@ body {
 .loader-overlay.fade-out {
   opacity: 0;
   pointer-events: none;
-}
-.loader-content {
-  text-align: center;
 }
 .spinner {
   width: 50px;
@@ -98,37 +76,37 @@ body {
   margin-top: 10px;
 }
 
-/* Login Overlay */
-.login-overlay {
+/* Overlays */
+.overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.95);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 10000;
 }
-.login-box {
+.overlay-box {
   background: #222;
-  padding: 30px;
-  border-radius: 8px;
+  padding: 20px;
+  border-radius: 10px;
   text-align: center;
+  width: 400px;
 }
-.login-box input {
+.overlay input {
   display: block;
+  width: 90%;
+  padding: 10px;
   margin: 10px auto;
-  padding: 8px;
-  width: 200px;
+  border-radius: 6px;
   border: none;
-  border-radius: 4px;
 }
-.login-box button {
+.overlay button {
   margin: 5px;
-  padding: 8px 14px;
+  padding: 8px 15px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  background: #00cc88;
+  color: white;
   cursor: pointer;
 }
-#loginBtn { background: #00cc88; color: white; }
-#signupBtn { background: #3498db; color: white; }
-#authMessage { margin-top: 10px; font-size: 14px; }
