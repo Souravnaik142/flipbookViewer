@@ -1,42 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive Flipbook</title>
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flipbook Viewer</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<h2>📚 Fun Course Flipbook!</h2>
-
-<div id="loader" class="loader">Loading PDF...</div>
-
-<div class="toolbar">
-  <button id="prev" title="Previous Page">◀</button>
-  <button id="next" title="Next Page">▶</button>
-  <button id="zoom" title="Zoom">🔍</button>
-  <button id="fullscreen" title="Fullscreen">⛶</button>
-  <label>
-    <input type="checkbox" id="doublePage"> 📖
-  </label>
-  <button id="musicToggle" title="Toggle Music">🎵</button>
-</div>
-
-<div class="container">
-  <div class="flipbook-container">
-    <div class="flipbook" id="flipbook"></div>
+  <div id="flipbook-container">
+    <div id="flipbook"></div>
   </div>
-</div>
 
-<div id="page-number">0 / 0</div>
+  <!-- Navigation Bar -->
+  <div id="navbar">
+    <button id="prevPage">⟨</button>
+    <span id="pageInfo">1 / 1</span>
+    <button id="nextPage">⟩</button>
+    <button id="zoomIn">🔍+</button>
+    <button id="zoomOut">🔍-</button>
+    <button id="fullscreen">⛶</button>
+    <button id="soundToggle">🔊</button>
+  </div>
 
-<script src="pdf.js"></script>
-<script>
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.js";
-</script>
-<script src="script.js"></script>
+  <!-- Page Flip Sound -->
+  <audio id="flipSound" src="page-flip.wav" preload="auto"></audio>
 
+  <!-- PDF.js -->
+  <script src="pdf.js"></script>
+  <script src="pdf.worker.js"></script>
+
+  <!-- App Script -->
+  <script src="script.js"></script>
 </body>
 </html>
