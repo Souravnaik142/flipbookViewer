@@ -2,7 +2,8 @@ let pdfDoc = null,
     totalPages = 0,
     scale = 1.2,
     soundOn = true,
-    pageFlip = null;
+    pageFlip = null,
+    currentPageNum = 1;
 
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
@@ -17,7 +18,7 @@ pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   renderPages();
 });
 
-// ✅ Render all pages
+// ✅ Render all pages into flipbook
 async function renderPages() {
   const pages = [];
   for (let i = 1; i <= totalPages; i++) {
@@ -35,7 +36,6 @@ async function renderPages() {
   }
 
   flipbook.innerHTML = "";
-
   if (pageFlip) pageFlip.destroy();
 
   pageFlip = new St.PageFlip(flipbook, {
@@ -56,7 +56,8 @@ async function renderPages() {
   updatePageInfo(1);
 
   pageFlip.on("flip", (e) => {
-    updatePageInfo(e.data + 1);
+    currentPageNum = e.data + 1;
+    updatePageInfo(currentPageNum);
     if (soundOn) flipSound.play();
   });
 
@@ -73,7 +74,6 @@ function renderPage(num, canvas) {
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-
     return page.render({ canvasContext: ctx, viewport: viewport }).promise;
   });
 }
@@ -84,8 +84,12 @@ function updatePageInfo(pageNum) {
 }
 
 // ✅ Navigation
-document.getElementById("prevPage").addEventListener("click", () => pageFlip?.flipPrev());
-document.getElementById("nextPage").addEventListener("click", () => pageFlip?.flipNext());
+document.getElementById("prevPage").addEventListener("click", () => {
+  if (pageFlip) pageFlip.flipPrev();
+});
+document.getElementById("nextPage").addEventListener("click", () => {
+  if (pageFlip) pageFlip.flipNext();
+});
 
 // ✅ Fullscreen
 document.getElementById("fullscreen").addEventListener("click", () => {
@@ -102,91 +106,114 @@ document.getElementById("soundToggle").addEventListener("click", () => {
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 });
 
-// ✅ Go to page
+// ✅ Go To Page
+function goToPage(pageNum) {
+  if (pageNum >= 1 && pageNum <= totalPages) {
+    const sheetIndex = (pageNum % 2 === 0) ? pageNum - 1 : pageNum - 2;
+    pageFlip.turnToPage(sheetIndex < 0 ? 0 : sheetIndex);
+    currentPageNum = pageNum;
+    updatePageInfo(currentPageNum);
+    document.getElementById("gotoPage").value = ""; // clear after jump
+  }
+}
 document.getElementById("gotoBtn").addEventListener("click", () => {
   const pageNum = parseInt(document.getElementById("gotoPage").value, 10);
-  if (pageNum >= 1 && pageNum <= totalPages) {
-    pageFlip.turnToPage(pageNum - 1);
-    updatePageInfo(pageNum);
+  goToPage(pageNum);
+});
+document.getElementById("gotoPage").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const pageNum = parseInt(e.target.value, 10);
+    goToPage(pageNum);
   }
 });
 
-// ✅ Search with highlight
+// ✅ Search
 let highlightLayer = null;
+let searchResults = [];
+let currentMatchIndex = 0;
+
 document.getElementById("searchBtn").addEventListener("click", async () => {
-  const query = document.getElementById("searchInput").value.trim();
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
   if (!query) return;
 
-  const resultPage = await searchInPDF(query);
-  if (resultPage) {
-    pageFlip.turnToPage(resultPage - 1);
-    updatePageInfo(resultPage);
+  searchResults = [];
+  currentMatchIndex = 0;
 
-    const page = await pdfDoc.getPage(resultPage);
-    await highlightMatches(page, query.toLowerCase());
+  for (let i = 1; i <= totalPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: scale });
+    const textContent = await page.getTextContent();
+
+    textContent.items.forEach(item => {
+      const text = item.str.toLowerCase();
+      if (text.includes(query)) {
+        const transform = pdfjsLib.Util.transform(
+          pdfjsLib.Util.transform(viewport.transform, item.transform),
+          [1, 0, 0, -1, 0, 0]
+        );
+        const x = transform[4];
+        const y = transform[5];
+        const width = item.width * viewport.scale;
+        const height = item.height * viewport.scale;
+
+        searchResults.push({ page: i, x, y, width, height });
+      }
+    });
+  }
+
+  if (searchResults.length > 0) {
+    goToMatch(0);
   } else {
     alert("No matches found.");
+    document.getElementById("searchCount").textContent = "";
   }
 });
 
-// ✅ Search helper
-async function searchInPDF(query) {
-  for (let i = 1; i <= totalPages; i++) {
-    const page = await pdfDoc.getPage(i);
-    const textContent = await page.getTextContent();
-    const strings = textContent.items.map(item => item.str.toLowerCase());
-    if (strings.some(str => str.includes(query.toLowerCase()))) {
-      return i;
-    }
-  }
-  return null;
+function goToMatch(index) {
+  currentMatchIndex = index;
+  const match = searchResults[index];
+
+  const sheetIndex = (match.page % 2 === 0) ? match.page - 1 : match.page - 2;
+  pageFlip.turnToPage(sheetIndex < 0 ? 0 : sheetIndex);
+  updatePageInfo(match.page);
+
+  highlightWord(match);
+
+  document.getElementById("searchCount").textContent =
+    `${currentMatchIndex + 1} / ${searchResults.length}`;
 }
 
-// ✅ Highlight matches
-async function highlightMatches(page, query) {
+function highlightWord(match) {
   if (highlightLayer) highlightLayer.remove();
 
-  const viewport = page.getViewport({ scale: scale });
-  const textContent = await page.getTextContent();
+  const canvas = flipbook.querySelectorAll("canvas")[match.page - 1];
+  if (!canvas) return;
+
+  const wrapper = canvas.parentElement;
+  wrapper.style.position = "relative";
 
   highlightLayer = document.createElement("div");
   highlightLayer.style.position = "absolute";
-  highlightLayer.style.top = "0";
-  highlightLayer.style.left = "0";
+  highlightLayer.style.left = `${match.x}px`;
+  highlightLayer.style.top = `${match.y - match.height}px`;
+  highlightLayer.style.width = `${match.width}px`;
+  highlightLayer.style.height = `${match.height}px`;
+  highlightLayer.style.backgroundColor = "rgba(255, 255, 0, 0.6)";
   highlightLayer.style.pointerEvents = "none";
-
-  const canvas = flipbook.querySelectorAll("canvas")[page.pageNumber - 1];
-  const wrapper = canvas.parentElement;
-  wrapper.style.position = "relative";
   wrapper.appendChild(highlightLayer);
 
-  textContent.items.forEach(item => {
-    const text = item.str.toLowerCase();
-    if (text.includes(query)) {
-      const transform = pdfjsLib.Util.transform(
-        pdfjsLib.Util.transform(viewport.transform, item.transform),
-        [1, 0, 0, -1, 0, 0]
-      );
-
-      const x = transform[4];
-      const y = transform[5];
-      const width = item.width * viewport.scale;
-      const height = item.height * viewport.scale;
-
-      const highlight = document.createElement("div");
-      highlight.style.position = "absolute";
-      highlight.style.left = `${x}px`;
-      highlight.style.top = `${y - height}px`;
-      highlight.style.width = `${width}px`;
-      highlight.style.height = `${height}px`;
-      highlight.style.backgroundColor = "rgba(255, 255, 0, 0.4)";
-      highlightLayer.appendChild(highlight);
-    }
-  });
+  highlightLayer.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-// ✅ Keyboard navigation
-document.addEventListener("keydown", (e) => {
-  if (e.code === "ArrowRight" || e.code === "Space") pageFlip.flipNext();
-  if (e.code === "ArrowLeft") pageFlip.flipPrev();
+document.getElementById("nextMatch").addEventListener("click", () => {
+  if (searchResults.length > 0) {
+    const nextIndex = (currentMatchIndex + 1) % searchResults.length;
+    goToMatch(nextIndex);
+  }
+});
+document.getElementById("prevMatch").addEventListener("click", () => {
+  if (searchResults.length > 0) {
+    const prevIndex = (currentMatchIndex - 1 + searchResults.length) % searchResults.length;
+    goToMatch(prevIndex);
+  }
 });
