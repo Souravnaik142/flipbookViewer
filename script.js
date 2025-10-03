@@ -12,6 +12,10 @@ const loaderText = document.getElementById("loaderText");
 const thumbnailStrip = document.getElementById("thumbnailStrip");
 const thumbToggle = document.getElementById("thumbToggle");
 
+// ✅ Allow body to be focusable for keyboard events
+document.body.setAttribute("tabindex", "0");
+document.body.focus();
+
 // ✅ Load PDF (change file name here)
 pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   pdfDoc = pdf;
@@ -114,6 +118,9 @@ function createThumbnail(pageNum) {
 
       thumbnailStrip.appendChild(img);
       if (pageNum === 1) img.classList.add("active");
+
+      // ✅ Keep keyboard focus on body after clicking thumbnail
+      img.addEventListener("click", () => setTimeout(() => document.body.focus(), 50));
     });
   });
 }
@@ -154,6 +161,11 @@ document.getElementById("soundToggle").addEventListener("click", toggleSound);
 thumbToggle.addEventListener("click", () => {
   thumbnailStrip.classList.toggle("hidden");
   thumbToggle.textContent = thumbnailStrip.classList.contains("hidden") ? "📕" : "📚";
+});
+
+// ✅ Keep keyboard working after clicking navbar buttons
+document.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("click", () => setTimeout(() => document.body.focus(), 50));
 });
 
 function toggleFullscreen() {
