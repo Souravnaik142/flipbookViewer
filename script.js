@@ -9,8 +9,10 @@ const flipSound = document.getElementById("flipSound");
 const flipbook = document.getElementById("flipbook");
 const loader = document.getElementById("loader");
 const loaderText = document.getElementById("loaderText");
+const thumbnailStrip = document.getElementById("thumbnailStrip");
+const thumbToggle = document.getElementById("thumbToggle");
 
-// ✅ Load PDF
+// ✅ Load PDF (change file name here)
 pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   pdfDoc = pdf;
   totalPages = pdf.numPages;
@@ -20,6 +22,8 @@ pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
 // ✅ Render all pages into flipbook
 async function renderPages() {
   const pages = [];
+  thumbnailStrip.innerHTML = ""; // clear old thumbnails
+
   for (let i = 1; i <= totalPages; i++) {
     const wrapper = document.createElement("div");
     wrapper.className = "page";
@@ -31,18 +35,13 @@ async function renderPages() {
     await renderPage(i, canvas);
     pages.push(wrapper);
 
+    createThumbnail(i); // make thumbnail
     loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
-  // Reset container
   flipbook.innerHTML = "";
+  if (pageFlip) pageFlip.destroy();
 
-  // Destroy previous instance if exists
-  if (pageFlip) {
-    pageFlip.destroy();
-  }
-
-  // ✅ Init PageFlip
   pageFlip = new St.PageFlip(flipbook, {
     width: 500,
     height: 700,
@@ -62,10 +61,14 @@ async function renderPages() {
 
   pageFlip.on("flip", (e) => {
     updatePageInfo(e.data + 1);
-    if (soundOn) flipSound.play();
+    highlightThumbnail(e.data + 1);
+
+    if (soundOn) {
+      flipSound.currentTime = 0;
+      flipSound.play();
+    }
   });
 
-  // Fade out loader (only once)
   if (!loader.classList.contains("fade-out")) {
     loader.classList.add("fade-out");
     setTimeout(() => {
@@ -91,7 +94,49 @@ function updatePageInfo(pageNum) {
   pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
 
-// ✅ Navigation
+// ✅ Create thumbnail
+function createThumbnail(pageNum) {
+  pdfDoc.getPage(pageNum).then((page) => {
+    const viewport = page.getViewport({ scale: 0.2 });
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
+      const img = document.createElement("img");
+      img.src = canvas.toDataURL();
+      img.dataset.page = pageNum;
+
+      img.addEventListener("click", () => {
+        if (pageFlip) pageFlip.flip(pageNum - 1);
+      });
+
+      thumbnailStrip.appendChild(img);
+      if (pageNum === 1) img.classList.add("active");
+    });
+  });
+}
+
+// ✅ Highlight active thumbnail & auto-scroll
+function highlightThumbnail(pageNum) {
+  const thumbs = thumbnailStrip.querySelectorAll("img");
+  thumbs.forEach(img => img.classList.remove("active"));
+
+  const active = thumbnailStrip.querySelector(`img[data-page="${pageNum}"]`);
+  if (active) {
+    active.classList.add("active");
+
+    // Auto-scroll center
+    const stripRect = thumbnailStrip.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+
+    const offset = activeRect.left - stripRect.left - (stripRect.width / 2) + (activeRect.width / 2);
+    thumbnailStrip.scrollBy({ left: offset, behavior: "smooth" });
+  }
+}
+
+// ✅ Navigation buttons
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
 });
@@ -99,31 +144,71 @@ document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
 });
 
-// ✅ Zoom
-document.getElementById("zoomIn").addEventListener("click", () => {
-  scale += 0.2;
-  renderPages();
-});
-document.getElementById("zoomOut").addEventListener("click", () => {
-  if (scale > 0.6) {
-    scale -= 0.2;
-    renderPages();
-  }
+// ✅ Fullscreen
+document.getElementById("fullscreen").addEventListener("click", toggleFullscreen);
+
+// ✅ Sound toggle
+document.getElementById("soundToggle").addEventListener("click", toggleSound);
+
+// ✅ Thumbnail toggle
+thumbToggle.addEventListener("click", () => {
+  thumbnailStrip.classList.toggle("hidden");
+  thumbToggle.textContent = thumbnailStrip.classList.contains("hidden") ? "📕" : "📚";
 });
 
-// ✅ Fullscreen
-document.getElementById("fullscreen").addEventListener("click", () => {
+function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
   } else {
     document.exitFullscreen();
   }
-});
+}
 
-// ✅ Sound toggle
-document.getElementById("soundToggle").addEventListener("click", () => {
+function toggleSound() {
   soundOn = !soundOn;
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+}
+
+// ✅ Keyboard navigation
+document.addEventListener("keydown", (e) => {
+  if (!pageFlip) return;
+
+  switch (e.key) {
+    case "ArrowLeft":
+      pageFlip.flipPrev();
+      break;
+    case "ArrowRight":
+      pageFlip.flipNext();
+      break;
+    case "+":
+    case "=":
+      scale += 0.2;
+      renderPages();
+      break;
+    case "-":
+      if (scale > 0.6) {
+        scale -= 0.2;
+        renderPages();
+      }
+      break;
+    case "f":
+    case "F":
+      toggleFullscreen();
+      break;
+    case "m":
+    case "M":
+      toggleSound();
+      break;
+    case "t":
+    case "T":
+      thumbToggle.click(); // shortcut for thumbnails toggle
+      break;
+  }
 });
 
-
+// ✅ Resize handling
+window.addEventListener("resize", () => {
+  if (pageFlip) {
+    pageFlip.updateFromHtml();
+  }
+});
