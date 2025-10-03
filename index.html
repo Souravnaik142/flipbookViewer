@@ -3,41 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Professional Flipbook</title>
+<title>PDF Flipbook</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>My Course Flipbook</h2>
-
-<div id="loader" class="loader">Loading...</div>
-
-<div class="toolbar">
-  <button id="prev">← Previous</button>
-  <button id="next">Next →</button>
-  <button id="zoom">Zoom</button>
-  <button id="fullscreen">Fullscreen</button>
-  <label><input type="checkbox" id="doublePage"> Double Page View</label>
+<div id="flipbook-container">
+  <div id="flipbook"></div>
+  <div id="thumbnails"></div>
+  <div id="controls">
+    <button id="prev">Prev</button>
+    <button id="next">Next</button>
+    <button id="zoom">Zoom</button>
+    <button id="fullscreen">Fullscreen</button>
+    <label><input type="checkbox" id="doublePage"> Double Page</label>
+    <input type="number" id="goto" min="1" placeholder="Go to page">
+    <span id="page-number"></span>
+  </div>
+  <div id="loader">Loading PDF...</div>
 </div>
 
-<div class="container">
-  <div class="toc" id="toc">
-    <h3>Pages</h3>
-    <div id="thumbnails"></div>
-  </div>
-
-  <div class="flipbook-container">
-    <div class="flipbook" id="flipbook"></div>
-  </div>
-</div>
-
-<div id="page-number">0 / 0</div>
-
-<!-- PDF.js library -->
+<!-- PDF.js -->
 <script src="pdf.js"></script>
-
-<!-- Flipbook JS -->
+<script src="pdf.worker.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>
