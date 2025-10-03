@@ -1,112 +1,43 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #111;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  overflow: hidden;
+  background: #f0f0f0;
+  text-align: center;
+}
+
+#authContainer {
+  margin-top: 100px;
+}
+
+#loginForm input {
+  margin: 5px;
+  padding: 8px;
+  width: 200px;
+}
+
+#viewer {
+  margin: 20px auto;
+  max-width: 1000px;
 }
 
 .navbar {
-  background: #222;
-  padding: 10px;
   display: flex;
-  gap: 10px;
-  justify-content: flex-start;
-  width: 100%;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-.navbar .spacer {
-  flex: 1;
-}
-
-.flipbook {
-  margin-top: 10px;
-  width: 90%;
-  height: 85%;
-}
-
-.page {
-  background: white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-.pdf-page {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* Loader */
-.loader-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  z-index: 9999;
-  opacity: 1;
-  transition: opacity 0.8s ease;
-}
-.loader-overlay.fade-out {
-  opacity: 0;
-  pointer-events: none;
-}
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 6px solid #444;
-  border-top: 6px solid #00ffcc;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-@keyframes spin {
-  100% { transform: rotate(360deg); }
-}
-#loaderText {
-  font-size: 18px;
-  margin-top: 10px;
-}
-
-/* Overlays */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-}
-.overlay-box {
+  justify-content: space-between;
   background: #222;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  width: 400px;
-}
-.overlay input {
-  display: block;
-  width: 90%;
-  padding: 10px;
-  margin: 10px auto;
-  border-radius: 6px;
-  border: none;
-}
-.overlay button {
-  margin: 5px;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 6px;
-  background: #00cc88;
   color: white;
+  padding: 10px;
+}
+
+.navbar button {
+  background: #444;
+  border: none;
+  color: white;
+  padding: 6px 12px;
   cursor: pointer;
+}
+
+#flipbook {
+  margin: 20px auto;
+  width: 600px;
+  height: 800px;
 }
