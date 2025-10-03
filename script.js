@@ -55,8 +55,19 @@ async function init() {
 function renderPageCanvas(pdfPage, canvas){
   const flipbookWidth = flipbook.clientWidth;
   const flipbookHeight = flipbook.clientHeight;
-  let scale = doublePage ? Math.min(flipbookWidth/2/pdfPage.view[2], flipbookHeight/pdfPage.view[3])*2
-                         : Math.min(flipbookWidth/pdfPage.view[2], flipbookHeight/pdfPage.view[3])*2;
+  let scale;
+if(doublePage){
+  scale = Math.min((flipbook.clientWidth / 2) / viewport.width,
+                   flipbook.clientHeight / viewport.height);
+} else {
+  scale = Math.min(flipbook.clientWidth / viewport.width,
+                   flipbook.clientHeight / viewport.height);
+}
+  allPages.forEach((p, i) => {
+  let flip = Math.floor(currentPage / 2) * 2 > i;
+  if(i===0) flip = false; // first page always right
+  p.classList.toggle('flipped', flip);
+});
 
   const viewport = pdfPage.getViewport({scale});
   const ratio = window.devicePixelRatio || 1;
@@ -66,6 +77,16 @@ function renderPageCanvas(pdfPage, canvas){
   ctx.setTransform(ratio,0,0,ratio,0,0);
   pdfPage.render({canvasContext:ctx, viewport}).promise.then(()=>{});
 }
+// When rendering pages
+allPages.forEach((p, i) => {
+  if(doublePage){
+    p.classList.add('double');
+    if(i % 2 === 0) p.classList.add('left');
+    else p.classList.add('right');
+  } else {
+    p.classList.remove('double', 'left', 'right');
+  }
+});
 
 // Render only visible pages for performance
 async function renderVisiblePages(){
@@ -82,7 +103,7 @@ async function renderVisiblePages(){
 function updatePageSizes(){
   for(let i=0; i<pagesCache.length; i++){
     if(pagesCache[i].loaded){
-      pdfDoc.getPage(i+1).then(page=>renderPageCanvas(page, pagesCache[i].canvas));
+      pdfDoc.getPage(i+1).then(page=>(page, pagesCache[i].canvas));
     }
   }
 }
