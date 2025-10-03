@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Professional PDF Flipbook</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>My Course Flipbook</h2>
+
+<div class="toolbar">
+  <button id="prev">← Previous</button>
+  <button id="next">Next →</button>
+  <button id="zoom">Zoom</button>
+  <button id="fullscreen">Fullscreen</button>
+  <label>
+    <input type="checkbox" id="doublePage"> Double Page View
+  </label>
+</div>
+
+<div class="container">
+  <div class="toc" id="toc">
+    <h3>Pages</h3>
+    <div id="thumbnails"></div>
+  </div>
+
+  <div class="flipbook-container">
+    <div class="flipbook" id="flipbook"></div>
+  </div>
+</div>
+
+<script src="pdf.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
