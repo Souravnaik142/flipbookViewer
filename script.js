@@ -62,7 +62,10 @@ async function renderPages() {
 
   pageFlip.on("flip", (e) => {
     updatePageInfo(e.data + 1);
-    if (soundOn) flipSound.play();
+    if (soundOn) {
+      flipSound.currentTime = 0; // prevent overlap
+      flipSound.play();
+    }
   });
 
   // Fade out loader (only once)
@@ -91,7 +94,7 @@ function updatePageInfo(pageNum) {
   pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
 
-// ✅ Navigation
+// ✅ Navigation (buttons)
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
 });
@@ -99,31 +102,50 @@ document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
 });
 
-// ✅ Zoom
-document.getElementById("zoomIn").addEventListener("click", () => {
-  scale += 0.2;
-  renderPages();
+// ✅ Fullscreen (button)
+document.getElementById("fullscreen").addEventListener("click", () => {
+  toggleFullscreen();
 });
-document.getElementById("zoomOut").addEventListener("click", () => {
-  if (scale > 0.6) {
-    scale -= 0.2;
-    renderPages();
+
+// ✅ Sound toggle (button)
+document.getElementById("soundToggle").addEventListener("click", () => {
+  toggleSound();
+});
+
+// === Keyboard Controls ===
+document.addEventListener("keydown", (e) => {
+  if (!pageFlip) return;
+
+  switch (e.key) {
+    case "ArrowLeft":
+      pageFlip.flipPrev();
+      break;
+    case "ArrowRight":
+      pageFlip.flipNext();
+      break;
+    case "f": case "F":
+      toggleFullscreen();
+      break;
+    case "m": case "M":
+      toggleSound();
+      break;
+    case " ": // Spacebar for next page
+      e.preventDefault();
+      pageFlip.flipNext();
+      break;
   }
 });
 
-// ✅ Fullscreen
-document.getElementById("fullscreen").addEventListener("click", () => {
+// ✅ Helpers
+function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
   } else {
     document.exitFullscreen();
   }
-});
+}
 
-// ✅ Sound toggle
-document.getElementById("soundToggle").addEventListener("click", () => {
+function toggleSound() {
   soundOn = !soundOn;
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
-});
-
-
+}
