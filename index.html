@@ -2,37 +2,196 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flipbook Viewer</title>
-  <link rel="stylesheet" href="style.css">
-
-  <!-- PageFlip Library -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/stpageflip@2.0.7/dist/page-flip.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/stpageflip@2.0.7/dist/page-flip.browser.min.js"></script>
-</head>
-<body>
-  <div id="flipbook-container">
-    <div id="flipbook" class="page-flip"></div>
-  </div>
-
-  <!-- Navigation Bar -->
-  <div id="navbar">
-    <button id="prevPage">⟨</button>
-    <span id="pageInfo">1 / 1</span>
-    <button id="nextPage">⟩</button>
-    <button id="zoomIn">🔍+</button>
-    <button id="zoomOut">🔍-</button>
-    <button id="fullscreen">⛶</button>
-    <button id="soundToggle">🔊</button>
-  </div>
-
-  <audio id="flipSound" src="page-flip.wav" preload="auto"></audio>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- PDF.js -->
   <script src="pdf.js"></script>
   <script src="pdf.worker.js"></script>
 
-  <!-- App Script -->
-  <script src="script.js"></script>
+  <!-- StPageFlip CSS + JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css" />
+  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #2d2d2d;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    #flipbook {
+      width: 100%;
+      max-width: 1000px;
+      height: 700px;
+      margin-top: 20px;
+    }
+    .controls {
+      margin: 10px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+    button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #444;
+      color: white;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #666;
+    }
+    #pageInfo {
+      min-width: 60px;
+      text-align: center;
+    }
+    canvas.pdf-page {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h2>📖 Flipbook Viewer</h2>
+
+  <!-- Flipbook container -->
+  <div id="flipbook"></div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button id="prevPage">⬅ Prev</button>
+    <span id="pageInfo">0 / 0</span>
+    <button id="nextPage">Next ➡</button>
+    <button id="zoomIn">➕</button>
+    <button id="zoomOut">➖</button>
+    <button id="fullscreen">⛶</button>
+    <button id="soundToggle">🔊</button>
+  </div>
+
+  <!-- Flip Sound -->
+  <audio id="flipSound" src="page-flip.wav"></audio>
+
+  <!-- Script -->
+  <script>
+    let pdfDoc = null,
+        totalPages = 0,
+        scale = 1.2,
+        soundOn = true;
+
+    const pageInfo = document.getElementById("pageInfo");
+    const flipSound = document.getElementById("flipSound");
+    const flipbook = document.getElementById("flipbook");
+
+    // Init StPageFlip
+    const pageFlip = new St.PageFlip(flipbook, {
+      width: 500,   // single page width
+      height: 700,  // single page height
+      size: "stretch",
+      minWidth: 315,
+      maxWidth: 1200,
+      minHeight: 400,
+      maxHeight: 1600,
+      maxShadowOpacity: 0.5,
+      showCover: true,   // first page is like a cover
+      useMouseEvents: true,
+      mobileScrollSupport: true,
+    });
+
+    // Load PDF
+    pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
+      pdfDoc = pdf;
+      totalPages = pdf.numPages;
+      renderPages();
+    });
+
+    // Render all PDF pages
+    async function renderPages() {
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "page";
+
+        const canvas = document.createElement("canvas");
+        canvas.className = "pdf-page";
+        wrapper.appendChild(canvas);
+
+        await renderPage(i, canvas);
+        pages.push(wrapper);
+      }
+      pageFlip.loadFromHTML(pages);
+      updatePageInfo(1);
+    }
+
+    // Render single PDF page
+    function renderPage(num, canvas) {
+      return pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale: scale });
+        const ctx = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+      });
+    }
+
+    // Update page counter
+    function updatePageInfo(pageNum) {
+      pageInfo.textContent = `${pageNum} / ${totalPages}`;
+    }
+
+    // Flip events
+    pageFlip.on("flip", (e) => {
+      updatePageInfo(e.data + 1);
+      if (soundOn) flipSound.play();
+    });
+
+    // Navigation
+    document.getElementById("prevPage").addEventListener("click", () => pageFlip.flipPrev());
+    document.getElementById("nextPage").addEventListener("click", () => pageFlip.flipNext());
+
+    // Zoom
+    document.getElementById("zoomIn").addEventListener("click", () => {
+      scale += 0.2;
+      rerender();
+    });
+    document.getElementById("zoomOut").addEventListener("click", () => {
+      if (scale > 0.6) {
+        scale -= 0.2;
+        rerender();
+      }
+    });
+
+    // Fullscreen
+    document.getElementById("fullscreen").addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // Sound toggle
+    document.getElementById("soundToggle").addEventListener("click", () => {
+      soundOn = !soundOn;
+      document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+    });
+
+    // Re-render PDF after zoom
+    function rerender() {
+      flipbook.innerHTML = "";
+      pageFlip.clear();
+      renderPages();
+    }
+  </script>
 </body>
 </html>
