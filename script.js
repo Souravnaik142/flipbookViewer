@@ -24,11 +24,14 @@ const pageFlip = new St.PageFlip(flipbook, {
   mobileScrollSupport: false
 });
 
-const pdfUrl = "yourcourse.pdf"; // ⚠️ Replace with your PDF
+// PDF.js
+const pdfUrl = "yourcourse.pdf"; // ⚠️ must be in same folder as index.html
 
 async function loadPDF() {
   const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-  const pages = [];
+
+  // Make container for page elements
+  const pageNodes = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
@@ -37,27 +40,35 @@ async function loadPDF() {
     const ctx = canvas.getContext("2d");
     canvas.width = viewport.width;
     canvas.height = viewport.height;
+
     await page.render({ canvasContext: ctx, viewport }).promise;
 
-    // Wrap in a page div
-    pages.push(`<div class="page"><img src="${canvas.toDataURL()}"></div>`);
+    // Build real DOM element
+    const pageDiv = document.createElement("div");
+    pageDiv.classList.add("page");
+
+    const img = document.createElement("img");
+    img.src = canvas.toDataURL();
+
+    pageDiv.appendChild(img);
+    pageNodes.push(pageDiv);
   }
 
-  // ✅ Load all pages at once
-  pageFlip.loadFromHTML(pages);
+  // ✅ Load DOM nodes into PageFlip
+  pageFlip.loadFromHTML(pageNodes);
 
-  // ✅ Bind navigation after pages exist
+  // ✅ Now bind nav
   document.getElementById("prevPage").onclick = () => pageFlip.flipPrev();
   document.getElementById("nextPage").onclick = () => pageFlip.flipNext();
 
   pageFlip.on("flip", e => {
-    document.getElementById("pageInfo").textContent = 
+    document.getElementById("pageInfo").textContent =
       `${e.data + 1} / ${pageFlip.getPageCount()}`;
     flipSound.currentTime = 0;
     flipSound.play();
   });
 
-  // Show initial page count
+  // Set initial info
   document.getElementById("pageInfo").textContent = `1 / ${pdf.numPages}`;
 }
 
