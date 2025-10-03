@@ -1,93 +1,117 @@
-const url = 'yourcourse.pdf'; // PDF file in main folder
-let pdfDoc = null;
-let currentPage = 0;
+const url = 'yourcourse.pdf';
+const flipSound = new Audio('page-flip.wav');
 const flipbook = document.getElementById('flipbook');
 const thumbnailsContainer = document.getElementById('thumbnails');
 const loader = document.getElementById('loader');
 const pageNumber = document.getElementById('page-number');
+
+let pdfDoc = null;
+let currentPage = 0;
 let doublePage = false;
-const flipSound = new Audio('page-flip.wav'); // optional WAV sound
+let navLocked = false;
+const pagesCache = [];
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
 
-// Load PDF
-pdfjsLib.getDocument(url).promise.then(pdf => {
-  pdfDoc = pdf;
+// Initialize PDF Flipbook
+async function init() {
+  pdfDoc = await pdfjsLib.getDocument(url).promise;
   loader.style.display = 'none';
 
-  for (let i = 0; i < pdf.numPages; i++) {
+  for(let i=0; i<pdfDoc.numPages; i++){
     const pageDiv = document.createElement('div');
     pageDiv.classList.add('page');
-    pageDiv.style.zIndex = pdf.numPages - i;
-
-    // Front + back
-    const front = document.createElement('div');
-    front.classList.add('front');
-    const back = document.createElement('div');
-    back.classList.add('back');
-    pageDiv.appendChild(front);
-    pageDiv.appendChild(back);
-
+    pageDiv.style.zIndex = pdfDoc.numPages - i;
     flipbook.appendChild(pageDiv);
 
-    pdf.getPage(i + 1).then(page => {
-      const canvas = document.createElement('canvas');
-      front.appendChild(canvas);   // ✅ canvas only on front side
-      const ctx = canvas.getContext('2d');
+    const front = document.createElement('div'); front.classList.add('front');
+    const back = document.createElement('div'); back.classList.add('back');
+    pageDiv.appendChild(front); pageDiv.appendChild(back);
 
-      const viewport = page.getViewport({ scale: 1 });
-      renderPageCanvas(page, canvas, viewport);
+    const canvas = document.createElement('canvas');
+    front.appendChild(canvas);
+    pagesCache.push({canvas, loaded:false});
 
-      // Thumbnails
-      const thumbCanvas = document.createElement('canvas');
-      const thumbCtx = thumbCanvas.getContext('2d');
-      const thumbScale = 100 / viewport.width;
-      thumbCanvas.width = viewport.width * thumbScale;
-      thumbCanvas.height = viewport.height * thumbScale;
-      page.render({ canvasContext: thumbCtx, viewport: page.getViewport({ scale: thumbScale }) });
-      thumbCanvas.classList.add('thumbnail');
-      if (i === 0) thumbCanvas.classList.add('active');
-      thumbnailsContainer.appendChild(thumbCanvas);
-      thumbCanvas.addEventListener('click', () => goToPage(i));
-    });
+    // Thumbnails
+    const page = await pdfDoc.getPage(i+1);
+    const thumbCanvas = document.createElement('canvas');
+    const thumbCtx = thumbCanvas.getContext('2d');
+    const viewport = page.getViewport({scale:0.2});
+    thumbCanvas.width = viewport.width;
+    thumbCanvas.height = viewport.height;
+    await page.render({canvasContext: thumbCtx, viewport}).promise;
+
+    thumbCanvas.classList.add('thumbnail');
+    if(i===0) thumbCanvas.classList.add('active');
+    thumbnailsContainer.appendChild(thumbCanvas);
+    thumbCanvas.addEventListener('click', ()=>goToPage(i));
   }
+
   updatePageNumber();
-  window.addEventListener('resize', () => updatePageSizes());
-});
-
-// Render PDF page into canvas
-function renderPageCanvas(pdfPage, canvas, viewport){
-  const flipbookWidth = flipbook.clientWidth;
-  const flipbookHeight = flipbook.clientHeight;
-  let scale;
-  if(doublePage){
-    scale = Math.min((flipbookWidth/2)/viewport.width, flipbookHeight/viewport.height)*2;
-  } else {
-    scale = Math.min(flipbookWidth/viewport.width, flipbookHeight/viewport.height)*2;
-  }
-
-  const scaledViewport = pdfPage.getViewport({ scale });
-  const ratio = window.devicePixelRatio || 1;
-  canvas.width = scaledViewport.width * ratio;
-  canvas.height = scaledViewport.height * ratio;
-  canvas.getContext('2d').setTransform(ratio, 0, 0, ratio, 0, 0);
-  pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport: scaledViewport });
+  renderVisiblePages();
 }
 
-// Update all page sizes (responsive)
+// Render a PDF page into a canvas
+function renderPageCanvas(pdfPage, canvas){
+  const flipbookWidth = flipbook.clientWidth;
+  const flipbookHeight = flipbook.clientHeight;
+  let scale = doublePage ? Math.min(flipbookWidth/2/pdfPage.view[2], flipbookHeight/pdfPage.view[3])*2
+                         : Math.min(flipbookWidth/pdfPage.view[2], flipbookHeight/pdfPage.view[3])*2;
+
+  const viewport = pdfPage.getViewport({scale});
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = viewport.width * ratio;
+  canvas.height = viewport.height * ratio;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  pdfPage.render({canvasContext:ctx, viewport}).promise.then(()=>{});
+}
+
+// Render only visible pages for performance
+async function renderVisiblePages(){
+  for(let i=0; i<pagesCache.length; i++){
+    if(Math.abs(i-currentPage) <= 1 && !pagesCache[i].loaded){
+      const page = await pdfDoc.getPage(i+1);
+      renderPageCanvas(page, pagesCache[i].canvas);
+      pagesCache[i].loaded = true;
+    }
+  }
+}
+
+// Resize canvases
 function updatePageSizes(){
+  for(let i=0; i<pagesCache.length; i++){
+    if(pagesCache[i].loaded){
+      pdfDoc.getPage(i+1).then(page=>renderPageCanvas(page, pagesCache[i].canvas));
+    }
+  }
+}
+
+// Navigate to a page
+function goToPage(index){
+  if(navLocked || index<0 || index>=pagesCache.length) return;
+  navLocked = true;
+  setTimeout(()=>navLocked=false,300);
+
+  flipSound.play();
   const allPages = document.querySelectorAll('.page');
-  allPages.forEach((page, i)=>{
-    const canvas = page.querySelector('.front canvas');
-    if(!canvas) return;
-    pdfDoc.getPage(i+1).then(pdfPage=>{
-      renderPageCanvas(pdfPage, canvas, pdfPage.getViewport({ scale:1 }));
-    });
+  allPages.forEach((p,i)=>{
+    let flip = i<index;
+    if(doublePage && i===0) flip=false;
+    p.classList.toggle('flipped', flip);
   });
+
+  currentPage = index;
+  document.querySelectorAll('.thumbnail').forEach((t,i)=>t.classList.toggle('active', i===index));
+  updatePageNumber();
+  renderVisiblePages();
+}
+
+function updatePageNumber(){
+  pageNumber.textContent = `${currentPage+1} / ${pdfDoc.numPages}`;
 }
 
 // Controls
-const pages = ()=>document.querySelectorAll('.page');
 document.getElementById('next').addEventListener('click', ()=>goToPage(currentPage+1));
 document.getElementById('prev').addEventListener('click', ()=>goToPage(currentPage-1));
 document.getElementById('zoom').addEventListener('click', ()=>flipbook.classList.toggle('zoomed'));
@@ -101,37 +125,18 @@ document.getElementById('doublePage').addEventListener('change', e=>{
   updatePageSizes();
   goToPage(currentPage);
 });
+document.getElementById('goto').addEventListener('change', e=>{
+  const val = Math.min(Math.max(1,+e.target.value), pdfDoc.numPages);
+  goToPage(val-1);
+});
 
-// Navigate pages
-function goToPage(pageIndex){
-  const allPages = pages();
-  if(pageIndex<0 || pageIndex>=allPages.length) return;
-  flipSound.play();
-
-  allPages.forEach((p,i)=>{
-    let flip = i < pageIndex;
-    // First page always on right in double mode
-    if(doublePage && i === 0) flip = false;
-    p.classList.toggle('flipped', flip);
-  });
-
-  currentPage = pageIndex;
-  document.querySelectorAll('.thumbnail').forEach((thumb,i)=>thumb.classList.toggle('active', i===pageIndex));
-  updatePageNumber();
-}
-
-function updatePageNumber(){
-  if(!pdfDoc) return;
-  pageNumber.textContent = `${currentPage+1} / ${pdfDoc.numPages}`;
-}
-
-// Keyboard navigation
+// Keyboard
 document.addEventListener('keydown', e=>{
   if(e.key==='ArrowRight') goToPage(currentPage+1);
   if(e.key==='ArrowLeft') goToPage(currentPage-1);
 });
 
-// Swipe navigation for mobile
+// Touch swipe
 let startX=0;
 flipbook.addEventListener('touchstart', e=>startX=e.touches[0].clientX);
 flipbook.addEventListener('touchend', e=>{
@@ -139,3 +144,9 @@ flipbook.addEventListener('touchend', e=>{
   if(endX-startX>50) goToPage(currentPage-1);
   if(startX-endX>50) goToPage(currentPage+1);
 });
+
+// Responsive
+window.addEventListener('resize', ()=>updatePageSizes());
+
+// Start
+init();
