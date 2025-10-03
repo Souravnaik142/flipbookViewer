@@ -1,43 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Professional Flipbook</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Flipbook</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>My Course Flipbook</h2>
+  <h2>My Course Flipbook</h2>
 
-<div id="loader" class="loader">Loading...</div>
+  <div id="loader" class="loader">Loading...</div>
 
-<div class="toolbar">
-  <button id="prev">← Previous</button>
-  <button id="next">Next →</button>
-  <button id="zoom">Zoom</button>
-  <button id="fullscreen">Fullscreen</button>
-  <label><input type="checkbox" id="doublePage"> Double Page View</label>
-</div>
-
-<div class="container">
-  <div class="toc" id="toc">
-    <h3>Pages</h3>
-    <div id="thumbnails"></div>
+  <div class="toolbar">
+    <button id="prev">← Previous</button>
+    <button id="next">Next →</button>
+    <button id="zoom">Zoom</button>
+    <button id="fullscreen">Fullscreen</button>
+    <label><input type="checkbox" id="doublePage"> Double Page View</label>
   </div>
 
-  <div class="flipbook-container">
-    <div class="flipbook" id="flipbook"></div>
+  <div class="container">
+    <div class="flipbook-container">
+      <div class="flipbook" id="flipbook"></div>
+    </div>
   </div>
-</div>
 
-<div id="page-number">0 / 0</div>
+  <div id="page-number">0 / 0</div>
 
-<!-- PDF.js library -->
-<script src="pdf.js"></script>
+  <!-- PDF.js -->
+  <script src="pdf.js"></script>
+  <script src="pdf.worker.js"></script>
 
-<!-- Flipbook JS -->
-<script src="script.js"></script>
+  <!-- Flipbook logic -->
+  <script src="script.js"></script>
 
 </body>
 </html>
