@@ -118,9 +118,6 @@ function createThumbnail(pageNum) {
 
       thumbnailStrip.appendChild(img);
       if (pageNum === 1) img.classList.add("active");
-
-      // ✅ Keep keyboard focus on body after clicking thumbnail
-      img.addEventListener("click", () => setTimeout(() => document.body.focus(), 50));
     });
   });
 }
@@ -161,11 +158,6 @@ document.getElementById("soundToggle").addEventListener("click", toggleSound);
 thumbToggle.addEventListener("click", () => {
   thumbnailStrip.classList.toggle("hidden");
   thumbToggle.textContent = thumbnailStrip.classList.contains("hidden") ? "📕" : "📚";
-});
-
-// ✅ Keep keyboard working after clicking navbar buttons
-document.querySelectorAll("button").forEach(btn => {
-  btn.addEventListener("click", () => setTimeout(() => document.body.focus(), 50));
 });
 
 function toggleFullscreen() {
@@ -216,6 +208,23 @@ document.addEventListener("keydown", (e) => {
       thumbToggle.click(); // shortcut for thumbnails toggle
       break;
   }
+});
+
+// ✅ Prevent buttons & strip from "stealing" arrow keys
+document.querySelectorAll("button, #thumbnailStrip").forEach(el => {
+  el.addEventListener("keydown", (e) => {
+    if (["ArrowLeft", "ArrowRight", "+", "-", "=", "f", "F", "m", "M", "t", "T"].includes(e.key)) {
+      e.preventDefault();   // stop element from using it
+      document.body.focus(); // restore focus
+      // Re-dispatch so global listener still works
+      document.dispatchEvent(new KeyboardEvent("keydown", e));
+    }
+  });
+
+  // Also refocus body after any click
+  el.addEventListener("click", () => {
+    setTimeout(() => document.body.focus(), 50);
+  });
 });
 
 // ✅ Resize handling
