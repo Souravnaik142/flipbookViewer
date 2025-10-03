@@ -2,7 +2,7 @@ let pdfDoc = null,
     totalPages = 0,
     scale = 1.2,
     soundOn = true,
-    pageFlip = null; // global
+    pageFlip = null;
 
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
@@ -12,7 +12,7 @@ const loaderText = document.getElementById("loaderText");
 const thumbnailStrip = document.getElementById("thumbnailStrip");
 const thumbToggle = document.getElementById("thumbToggle");
 
-// ✅ Make body focusable and grab focus
+// ✅ Body is focusable
 document.body.setAttribute("tabindex", "0");
 document.body.focus();
 
@@ -23,7 +23,7 @@ pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   renderPages();
 });
 
-// ✅ Render all pages into flipbook
+// ✅ Render all pages
 async function renderPages() {
   const pages = [];
   thumbnailStrip.innerHTML = "";
@@ -75,46 +75,44 @@ async function renderPages() {
 
   if (!loader.classList.contains("fade-out")) {
     loader.classList.add("fade-out");
-    setTimeout(() => {
-      loader.style.display = "none";
-    }, 800);
+    setTimeout(() => loader.style.display = "none", 800);
   }
 }
 
-// ✅ Render single page
+// ✅ Render one page
 function renderPage(num, canvas) {
   return pdfDoc.getPage(num).then(page => {
-    const viewport = page.getViewport({ scale: scale });
+    const viewport = page.getViewport({ scale });
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+    return page.render({ canvasContext: ctx, viewport }).promise;
   });
 }
 
-// ✅ Update page info
+// ✅ Page info
 function updatePageInfo(pageNum) {
   pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
 
-// ✅ Create thumbnail
+// ✅ Thumbnails
 function createThumbnail(pageNum) {
-  pdfDoc.getPage(pageNum).then((page) => {
+  pdfDoc.getPage(pageNum).then(page => {
     const viewport = page.getViewport({ scale: 0.2 });
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
+    page.render({ canvasContext: ctx, viewport }).promise.then(() => {
       const img = document.createElement("img");
       img.src = canvas.toDataURL();
       img.dataset.page = pageNum;
 
       img.addEventListener("click", () => {
         if (pageFlip) pageFlip.flip(pageNum - 1);
-        setTimeout(() => document.body.focus(), 50); // regain focus
+        restoreFocus();
       });
 
       thumbnailStrip.appendChild(img);
@@ -123,7 +121,6 @@ function createThumbnail(pageNum) {
   });
 }
 
-// ✅ Highlight active thumbnail & auto-scroll
 function highlightThumbnail(pageNum) {
   const thumbs = thumbnailStrip.querySelectorAll("img");
   thumbs.forEach(img => img.classList.remove("active"));
@@ -134,7 +131,6 @@ function highlightThumbnail(pageNum) {
 
     const stripRect = thumbnailStrip.getBoundingClientRect();
     const activeRect = active.getBoundingClientRect();
-
     const offset = activeRect.left - stripRect.left - (stripRect.width / 2) + (activeRect.width / 2);
     thumbnailStrip.scrollBy({ left: offset, behavior: "smooth" });
   }
@@ -143,28 +139,29 @@ function highlightThumbnail(pageNum) {
 // ✅ Navigation buttons
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
-  setTimeout(() => document.body.focus(), 50);
+  restoreFocus();
 });
 document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
-  setTimeout(() => document.body.focus(), 50);
+  restoreFocus();
 });
 
-// ✅ Fullscreen (fix focus issue)
+// ✅ Fullscreen
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     flipbook.requestFullscreen().then(() => {
-      setTimeout(() => document.body.focus(), 100);
+      flipbook.setAttribute("tabindex", "0");
+      flipbook.focus();   // focus flipbook in fullscreen
     });
   } else {
     document.exitFullscreen().then(() => {
-      setTimeout(() => document.body.focus(), 100);
+      document.body.focus(); // restore body focus
     });
   }
 }
 document.getElementById("fullscreen").addEventListener("click", toggleFullscreen);
 
-// ✅ Sound toggle
+// ✅ Sound
 function toggleSound() {
   soundOn = !soundOn;
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
@@ -175,49 +172,40 @@ document.getElementById("soundToggle").addEventListener("click", toggleSound);
 thumbToggle.addEventListener("click", () => {
   thumbnailStrip.classList.toggle("hidden");
   thumbToggle.textContent = thumbnailStrip.classList.contains("hidden") ? "📕" : "📚";
-  setTimeout(() => document.body.focus(), 50);
+  restoreFocus();
 });
 
-// ✅ Keyboard navigation (always on window)
-window.addEventListener("keydown", (e) => {
+// ✅ Keyboard navigation (bind to document for fullscreen)
+document.addEventListener("keydown", (e) => {
   if (!pageFlip) return;
 
   switch (e.key) {
-    case "ArrowLeft":
-      pageFlip.flipPrev();
-      break;
-    case "ArrowRight":
-      pageFlip.flipNext();
-      break;
-    case "+":
-    case "=":
-      scale += 0.2;
-      renderPages();
-      break;
-    case "-":
-      if (scale > 0.6) {
-        scale -= 0.2;
-        renderPages();
-      }
-      break;
-    case "f":
-    case "F":
-      toggleFullscreen();
-      break;
-    case "m":
-    case "M":
-      toggleSound();
-      break;
-    case "t":
-    case "T":
-      thumbToggle.click();
-      break;
+    case "ArrowLeft": pageFlip.flipPrev(); break;
+    case "ArrowRight": pageFlip.flipNext(); break;
+    case "+": case "=": scale += 0.2; renderPages(); break;
+    case "-": if (scale > 0.6) { scale -= 0.2; renderPages(); } break;
+    case "f": case "F": toggleFullscreen(); break;
+    case "m": case "M": toggleSound(); break;
+    case "t": case "T": thumbToggle.click(); break;
   }
 });
 
-// ✅ Resize handling
+// ✅ Ensure focus after UI clicks
+function restoreFocus() {
+  setTimeout(() => {
+    if (document.fullscreenElement) {
+      flipbook.focus();
+    } else {
+      document.body.focus();
+    }
+  }, 50);
+}
+
+document.querySelectorAll("button, #thumbnailStrip img").forEach(el => {
+  el.addEventListener("click", restoreFocus);
+});
+
+// ✅ Resize
 window.addEventListener("resize", () => {
-  if (pageFlip) {
-    pageFlip.updateFromHtml();
-  }
+  if (pageFlip) pageFlip.updateFromHtml();
 });
