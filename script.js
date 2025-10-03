@@ -63,7 +63,7 @@ auth.onAuthStateChanged(user => {
 
 // ✅ Load PDF
 function loadPDF() {
-  pdfjsLib.getDocument("yourpdf.pdf").promise.then(pdf => {
+  pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
     pdfDoc = pdf;
     totalPages = pdf.numPages;
     renderPages();
