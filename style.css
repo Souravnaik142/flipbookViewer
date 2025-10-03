@@ -1,0 +1,108 @@
+body {
+  font-family: sans-serif;
+  background: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.toolbar {
+  margin-bottom: 10px;
+}
+
+.toolbar button {
+  margin: 0 5px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.container {
+  display: flex;
+  width: 90%;
+  max-width: 1000px;
+}
+
+.toc {
+  width: 150px;
+  background: #f9f9f9;
+  padding: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  max-height: 80vh;
+  margin-right: 10px;
+}
+
+.toc h3 { text-align:center; margin-bottom:10px; }
+
+.thumbnail {
+  width: 100%;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border 0.3s;
+}
+
+.thumbnail.active { border: 2px solid #007BFF; }
+
+.flipbook-container {
+  perspective: 2000px;
+  flex: 1;
+  height: 80vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.flipbook {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.page {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  transform-origin: left;
+  transition: transform 1s cubic-bezier(0.4,0,0.2,1);
+  background: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.page.flipped { transform: rotateY(-180deg); }
+
+canvas { width: 100%; height: 100%; }
+
+.flipbook.zoomed { transform: scale(1.8); }
+
+.flipbook.double .page {
+  width: 50%;
+  transform-origin: left;
+}
+
+.flipbook.double .page.flipped {
+  transform: rotateY(-180deg);
+}
+
+.controls { margin-top: 10px; }
+
+@media(max-width:768px){
+  .container { flex-direction: column; align-items: center; }
+  .toc { width: 90%; display: flex; flex-wrap: wrap; max-height: 150px; margin-bottom: 10px; }
+  .thumbnail { width: 40px; margin:5px; }
+  .flipbook.double .page { width: 100%; }
+}
