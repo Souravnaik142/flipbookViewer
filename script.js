@@ -127,93 +127,35 @@ document.getElementById("gotoPage").addEventListener("keydown", (e) => {
   }
 });
 
-// ✅ Search
-let highlightLayer = null;
-let searchResults = [];
-let currentMatchIndex = 0;
+// ✅ Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  if (!pageFlip) return;
 
-document.getElementById("searchBtn").addEventListener("click", async () => {
-  const query = document.getElementById("searchInput").value.trim().toLowerCase();
-  if (!query) return;
-
-  searchResults = [];
-  currentMatchIndex = 0;
-
-  for (let i = 1; i <= totalPages; i++) {
-    const page = await pdfDoc.getPage(i);
-    const viewport = page.getViewport({ scale: scale });
-    const textContent = await page.getTextContent();
-
-    textContent.items.forEach(item => {
-      const text = item.str.toLowerCase();
-      if (text.includes(query)) {
-        const transform = pdfjsLib.Util.transform(
-          pdfjsLib.Util.transform(viewport.transform, item.transform),
-          [1, 0, 0, -1, 0, 0]
-        );
-        const x = transform[4];
-        const y = transform[5];
-        const width = item.width * viewport.scale;
-        const height = item.height * viewport.scale;
-
-        searchResults.push({ page: i, x, y, width, height });
+  switch (e.key) {
+    case "ArrowLeft":
+      pageFlip.flipPrev();
+      break;
+    case "ArrowRight":
+      pageFlip.flipNext();
+      break;
+    case "ArrowUp":
+      goToPage(1);
+      break;
+    case "ArrowDown":
+      goToPage(totalPages);
+      break;
+    case "f":
+    case "F":
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
       }
-    });
-  }
-
-  if (searchResults.length > 0) {
-    goToMatch(0);
-  } else {
-    alert("No matches found.");
-    document.getElementById("searchCount").textContent = "";
-  }
-});
-
-function goToMatch(index) {
-  currentMatchIndex = index;
-  const match = searchResults[index];
-
-  const sheetIndex = (match.page % 2 === 0) ? match.page - 1 : match.page - 2;
-  pageFlip.turnToPage(sheetIndex < 0 ? 0 : sheetIndex);
-  updatePageInfo(match.page);
-
-  highlightWord(match);
-
-  document.getElementById("searchCount").textContent =
-    `${currentMatchIndex + 1} / ${searchResults.length}`;
-}
-
-function highlightWord(match) {
-  if (highlightLayer) highlightLayer.remove();
-
-  const canvas = flipbook.querySelectorAll("canvas")[match.page - 1];
-  if (!canvas) return;
-
-  const wrapper = canvas.parentElement;
-  wrapper.style.position = "relative";
-
-  highlightLayer = document.createElement("div");
-  highlightLayer.style.position = "absolute";
-  highlightLayer.style.left = `${match.x}px`;
-  highlightLayer.style.top = `${match.y - match.height}px`;
-  highlightLayer.style.width = `${match.width}px`;
-  highlightLayer.style.height = `${match.height}px`;
-  highlightLayer.style.backgroundColor = "rgba(255, 255, 0, 0.6)";
-  highlightLayer.style.pointerEvents = "none";
-  wrapper.appendChild(highlightLayer);
-
-  highlightLayer.scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
-document.getElementById("nextMatch").addEventListener("click", () => {
-  if (searchResults.length > 0) {
-    const nextIndex = (currentMatchIndex + 1) % searchResults.length;
-    goToMatch(nextIndex);
-  }
-});
-document.getElementById("prevMatch").addEventListener("click", () => {
-  if (searchResults.length > 0) {
-    const prevIndex = (currentMatchIndex - 1 + searchResults.length) % searchResults.length;
-    goToMatch(prevIndex);
+      break;
+    case "m":
+    case "M":
+      soundOn = !soundOn;
+      document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+      break;
   }
 });
