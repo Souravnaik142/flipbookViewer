@@ -24,7 +24,7 @@ const pageFlip = new St.PageFlip(flipbook, {
   mobileScrollSupport: false
 });
 
-const pdfUrl = "sample.pdf"; // replace with your file
+const pdfUrl = "yourcourse.pdf"; // replace with your file
 pdfjsLib.getDocument(pdfUrl).promise.then(async (pdf) => {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
