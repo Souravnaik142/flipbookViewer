@@ -21,8 +21,17 @@
     </div>
   </div>
 
-  <!-- Navbar -->
-  <nav class="navbar">
+  <!-- Resume Popup -->
+  <div id="resumePopup" class="popup-overlay">
+    <div class="popup-content">
+      <p>Continue where you left off?</p>
+      <button id="resumeYes">Yes</button>
+      <button id="resumeNo">No</button>
+    </div>
+  </div>
+
+  <!-- Navigation bar -->
+  <nav class="navbar" id="navbar">
     <button id="prevPage">⬅ Prev</button>
     <span id="pageInfo"></span>
     <button id="nextPage">Next ➡</button>
@@ -30,17 +39,8 @@
     <button id="soundToggle">🔊</button>
   </nav>
 
-  <!-- Flipbook -->
+  <!-- Flipbook container -->
   <div id="flipbook" class="flipbook"></div>
-
-  <!-- Resume Popup -->
-  <div id="resumePopup" class="resume-popup">
-    <div class="popup-content">
-      <p id="resumeText">Continue where you left off?</p>
-      <button id="resumeYes">Yes</button>
-      <button id="resumeNo">No</button>
-    </div>
-  </div>
 
   <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
