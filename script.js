@@ -27,27 +27,10 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
       const ctx = canvas.getContext('2d');
 
       const viewport = page.getViewport({ scale:1 });
-      const containerWidth = flipbook.clientWidth;
-      const containerHeight = flipbook.clientHeight;
 
-      // Corrected scaling for double-page
-      let scale;
-      if(doublePage){
-        scale = Math.min((containerWidth/2)/viewport.width, containerHeight/viewport.height)*2; 
-      } else {
-        scale = Math.min(containerWidth/viewport.width, containerHeight/viewport.height)*2;
-      }
-
-      const scaledViewport = page.getViewport({ scale });
-      const ratio = window.devicePixelRatio || 1;
-      canvas.width = scaledViewport.width * ratio;
-      canvas.height = scaledViewport.height * ratio;
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-      page.render({ canvasContext: ctx, viewport: scaledViewport });
-      canvas.style.width='100%'; 
-      canvas.style.height='100%';
-
+      // Initial render
+      renderPageCanvas(page, canvas, viewport);
+      
       // Thumbnails
       const thumbCanvas = document.createElement('canvas');
       const thumbCtx = thumbCanvas.getContext('2d');
@@ -62,7 +45,39 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
     });
   }
   updatePageNumber();
+  window.addEventListener('resize', ()=>updatePageSizes());
 });
+
+// Render PDF page into canvas
+function renderPageCanvas(pdfPage, canvas, viewport){
+  const flipbookWidth = flipbook.clientWidth;
+  const flipbookHeight = flipbook.clientHeight;
+  let scale;
+  if(doublePage){
+    scale = Math.min((flipbookWidth/2)/viewport.width, flipbookHeight/viewport.height)*2;
+  } else {
+    scale = Math.min(flipbookWidth/viewport.width, flipbookHeight/viewport.height)*2;
+  }
+
+  const scaledViewport = pdfPage.getViewport({ scale });
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = scaledViewport.width * ratio;
+  canvas.height = scaledViewport.height * ratio;
+  canvas.getContext('2d').setTransform(ratio, 0, 0, ratio, 0, 0);
+  pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport: scaledViewport });
+}
+
+// Update all page sizes (responsive)
+function updatePageSizes(){
+  const allPages = document.querySelectorAll('.page');
+  allPages.forEach((page, i)=>{
+    const canvas = page.querySelector('canvas');
+    if(!canvas) return;
+    pdfDoc.getPage(i+1).then(pdfPage=>{
+      renderPageCanvas(pdfPage, canvas, pdfPage.getViewport({ scale:1 }));
+    });
+  });
+}
 
 // Controls
 const pages = ()=>document.querySelectorAll('.page');
@@ -76,17 +91,24 @@ document.getElementById('fullscreen').addEventListener('click', ()=>{
 document.getElementById('doublePage').addEventListener('change', e=>{
   doublePage = e.target.checked;
   flipbook.classList.toggle('double', doublePage);
-  goToPage(currentPage); // re-render to adjust scaling
+  updatePageSizes();
+  goToPage(currentPage);
 });
 
+// Navigate pages
 function goToPage(pageIndex){
   const allPages = pages();
   if(pageIndex<0 || pageIndex>=allPages.length) return;
   flipSound.play();
 
-  allPages.forEach((p,i)=>p.classList.toggle('flipped', i<pageIndex));
-  currentPage = pageIndex;
+  allPages.forEach((p,i)=>{
+    let flip = i < pageIndex;
+    // First page always on right in double mode
+    if(doublePage && i === 0) flip = false;
+    p.classList.toggle('flipped', flip);
+  });
 
+  currentPage = pageIndex;
   document.querySelectorAll('.thumbnail').forEach((thumb,i)=>thumb.classList.toggle('active', i===pageIndex));
   updatePageNumber();
 }
@@ -96,13 +118,13 @@ function updatePageNumber(){
   pageNumber.textContent = `${currentPage+1} / ${pdfDoc.numPages}`;
 }
 
-// Keyboard
+// Keyboard navigation
 document.addEventListener('keydown', e=>{
   if(e.key==='ArrowRight') goToPage(currentPage+1);
   if(e.key==='ArrowLeft') goToPage(currentPage-1);
 });
 
-// Swipe
+// Swipe navigation for mobile
 let startX=0;
 flipbook.addEventListener('touchstart', e=>startX=e.touches[0].clientX);
 flipbook.addEventListener('touchend', e=>{
