@@ -1,8 +1,10 @@
+// ----- Globals -----
 let pdfDoc = null,
     totalPages = 0,
     scale = 1.2,
     soundOn = true,
-    pageFlip = null;
+    pageFlip = null,
+    highlightLayer = null;
 
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
@@ -12,14 +14,17 @@ const loaderText = document.getElementById("loaderText");
 const thumbnailBar = document.getElementById("thumbnailBar");
 const thumbToggle = document.getElementById("thumbToggle");
 
-// ✅ Load PDF
+// ----- Load PDF -----
 pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   pdfDoc = pdf;
   totalPages = pdf.numPages;
   renderPages();
+}).catch(err => {
+  loaderText.textContent = "Failed to load PDF. Check yourcourse.pdf exists.";
+  console.error(err);
 });
 
-// ✅ Render all pages into flipbook & thumbnails
+// ----- Render pages + thumbnails -----
 async function renderPages() {
   const pages = [];
   thumbnailBar.innerHTML = "";
@@ -43,6 +48,7 @@ async function renderPages() {
     createThumbnail(i);
   }
 
+  // Attach pages to flipbook
   flipbook.innerHTML = "";
   if (pageFlip) pageFlip.destroy();
 
@@ -73,13 +79,23 @@ async function renderPages() {
     }
   });
 
+  // Hide loader
   if (!loader.classList.contains("fade-out")) {
     loader.classList.add("fade-out");
     setTimeout(() => (loader.style.display = "none"), 800);
   }
+
+  // Initialize thumbnail toggle label depending on width
+  if (window.innerWidth <= 768) {
+    thumbnailBar.classList.add("hidden");
+    thumbToggle.textContent = "📖 Show Thumbnails";
+  } else {
+    thumbnailBar.classList.remove("hidden");
+    thumbToggle.textContent = "📕 Hide Thumbnails";
+  }
 }
 
-// ✅ Render single page
+// ----- Render a single PDF page into canvas -----
 function renderPage(num, canvas) {
   return pdfDoc.getPage(num).then(page => {
     const viewport = page.getViewport({ scale });
@@ -90,12 +106,12 @@ function renderPage(num, canvas) {
   });
 }
 
-// ✅ Update page info
+// ----- Update page counter -----
 function updatePageInfo(pageNum) {
   pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
 
-// ✅ Navigation
+// ----- Navigation buttons -----
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
 });
@@ -103,42 +119,115 @@ document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
 });
 
-// ✅ Fullscreen
+// ----- Fullscreen & Sound buttons -----
 document.getElementById("fullscreen").addEventListener("click", toggleFullscreen);
-
-// ✅ Sound toggle
 document.getElementById("soundToggle").addEventListener("click", toggleSound);
 
-// ✅ Keyboard controls
-document.addEventListener("keydown", (e) => {
-  if (!pageFlip) return;
-  switch (e.key) {
-    case "ArrowLeft": pageFlip.flipPrev(); break;
-    case "ArrowRight": pageFlip.flipNext(); break;
-    case "f": case "F": toggleFullscreen(); break;
-    case "m": case "M": toggleSound(); break;
-    case " ": e.preventDefault(); pageFlip.flipNext(); break;
+// ----- Go To Page -----
+document.getElementById("gotoPage").addEventListener("change", (e) => {
+  const pageNum = parseInt(e.target.value, 10);
+  if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+    pageFlip.turnToPage(pageNum - 1);
+    highlightThumbnail(pageNum);
   }
+  e.target.value = "";
 });
 
-// ✅ Toggle thumbnails
-thumbToggle.addEventListener("click", () => {
-  const isHidden = thumbnailBar.classList.contains("hidden") || !thumbnailBar.classList.contains("show");
-  if (isHidden) {
-    thumbnailBar.classList.remove("hidden");
-    thumbnailBar.classList.add("show");
-    thumbToggle.textContent = "📕 Hide Thumbnails";
+// ----- Search w/ highlights (jumps to first matching page) -----
+document.getElementById("searchBtn").addEventListener("click", async () => {
+  const query = document.getElementById("searchInput").value.trim();
+  if (!query) return;
+
+  const resultPage = await searchInPDF(query);
+  if (resultPage) {
+    pageFlip.turnToPage(resultPage - 1);
+    highlightThumbnail(resultPage);
+
+    // Render highlights on that page
+    const page = await pdfDoc.getPage(resultPage);
+    await highlightMatches(page, query.toLowerCase());
   } else {
-    thumbnailBar.classList.add("hidden");
-    thumbnailBar.classList.remove("show");
-    thumbToggle.textContent = "📖 Show Thumbnails";
+    alert("No matches found.");
   }
 });
 
-// ✅ Create thumbnail
+// Basic search that returns first matching page
+async function searchInPDF(query) {
+  query = query.toLowerCase();
+  for (let i = 1; i <= totalPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const textContent = await page.getTextContent();
+    const strings = textContent.items.map(item => item.str.toLowerCase());
+    if (strings.some(str => str.includes(query))) {
+      return i;
+    }
+  }
+  return null;
+}
+
+// Highlight matches on a given page (yellow translucent rectangles)
+async function highlightMatches(page, query) {
+  // clear previous highlights
+  if (highlightLayer) highlightLayer.remove();
+
+  const viewport = page.getViewport({ scale });
+  const textContent = await page.getTextContent();
+
+  // find the canvas for this page (canvas order matches PDF pages)
+  // flipbook may contain canvases in the DOM for each page wrapper
+  const canvases = flipbook.querySelectorAll("canvas");
+  const canvas = canvases[page.pageNumber - 1];
+  if (!canvas) return;
+
+  const wrapper = canvas.parentElement;
+  wrapper.style.position = "relative";
+
+  // create overlay
+  highlightLayer = document.createElement("div");
+  highlightLayer.style.position = "absolute";
+  highlightLayer.style.top = "0";
+  highlightLayer.style.left = "0";
+  highlightLayer.style.width = canvas.width + "px";
+  highlightLayer.style.height = canvas.height + "px";
+  highlightLayer.style.pointerEvents = "none";
+  wrapper.appendChild(highlightLayer);
+
+  // iterate text items and draw rectangles if they include query
+  textContent.items.forEach(item => {
+    const text = item.str.toLowerCase();
+    if (text.includes(query)) {
+      // Compute transform to get coordinates on the rendered canvas
+      const tx = pdfjsLib.Util.transform(
+        viewport.transform,
+        item.transform
+      );
+
+      // tx[4], tx[5] are x,y in PDF units; item.width approximates width in text space
+      const x = tx[4];
+      const y = tx[5];
+      const fontHeight = item.height || 10;
+      const width = (item.width || (text.length * 6)) * viewport.scale;
+      const height = fontHeight * viewport.scale;
+
+      const highlight = document.createElement("div");
+      highlight.style.position = "absolute";
+      // PDF.js uses a coordinate system with origin at bottom-left for transform,
+      // the text's y coordinate needs adjustment to top-left canvas coords.
+      highlight.style.left = `${x}px`;
+      highlight.style.top = `${canvas.height - y - height}px`;
+      highlight.style.width = `${width}px`;
+      highlight.style.height = `${height}px`;
+      highlight.style.backgroundColor = "rgba(255, 255, 0, 0.45)";
+      highlightLayer.appendChild(highlight);
+    }
+  });
+}
+
+// ----- Thumbnails: create + click handler (auto-hide on mobile) -----
 function createThumbnail(pageNum) {
   pdfDoc.getPage(pageNum).then((page) => {
-    const viewport = page.getViewport({ scale: 0.15 });
+    const thumbScale = 0.15;
+    const viewport = page.getViewport({ scale: thumbScale });
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     canvas.width = viewport.width;
@@ -153,7 +242,7 @@ function createThumbnail(pageNum) {
         pageFlip.turnToPage(pageNum - 1);
         highlightThumbnail(pageNum);
 
-        // ✅ Auto-hide on mobile
+        // Auto-hide on mobile after selecting
         if (window.innerWidth <= 768) {
           thumbnailBar.classList.add("hidden");
           thumbnailBar.classList.remove("show");
@@ -162,12 +251,13 @@ function createThumbnail(pageNum) {
       });
 
       thumbnailBar.appendChild(thumbWrapper);
+
       if (pageNum === 1) highlightThumbnail(1);
     });
   });
 }
 
-// ✅ Highlight + auto-scroll
+// Highlight + auto-scroll thumbnail into view
 function highlightThumbnail(pageNum) {
   const thumbnails = document.querySelectorAll(".thumbnail");
   thumbnails.forEach((thumb, i) => {
@@ -179,37 +269,85 @@ function highlightThumbnail(pageNum) {
   });
 }
 
-// ✅ Drag/Swipe thumbnail bar
-let isDown = false, startX, scrollLeft;
+// ----- Thumbnail drag/wheel behavior -----
+// drag-to-scroll (mouse)
+let isDown = false, startX = 0, scrollLeft = 0;
 thumbnailBar.addEventListener("mousedown", (e) => {
   isDown = true;
+  thumbnailBar.classList.add("dragging");
   startX = e.pageX - thumbnailBar.offsetLeft;
   scrollLeft = thumbnailBar.scrollLeft;
 });
-thumbnailBar.addEventListener("mouseleave", () => (isDown = false));
-thumbnailBar.addEventListener("mouseup", () => (isDown = false));
+thumbnailBar.addEventListener("mouseleave", () => {
+  isDown = false;
+  thumbnailBar.classList.remove("dragging");
+});
+thumbnailBar.addEventListener("mouseup", () => {
+  isDown = false;
+  thumbnailBar.classList.remove("dragging");
+});
 thumbnailBar.addEventListener("mousemove", (e) => {
   if (!isDown) return;
   e.preventDefault();
   const x = e.pageX - thumbnailBar.offsetLeft;
-  thumbnailBar.scrollLeft = scrollLeft - (x - startX) * 2;
+  const walk = (x - startX) * 2; // scroll speed
+  thumbnailBar.scrollLeft = scrollLeft - walk;
 });
+
+// touch drag
 thumbnailBar.addEventListener("touchstart", (e) => {
   isDown = true;
   startX = e.touches[0].pageX - thumbnailBar.offsetLeft;
   scrollLeft = thumbnailBar.scrollLeft;
 });
-thumbnailBar.addEventListener("touchend", () => (isDown = false));
+thumbnailBar.addEventListener("touchend", () => { isDown = false; });
 thumbnailBar.addEventListener("touchmove", (e) => {
   if (!isDown) return;
   const x = e.touches[0].pageX - thumbnailBar.offsetLeft;
-  thumbnailBar.scrollLeft = scrollLeft - (x - startX) * 2;
+  const walk = (x - startX) * 2;
+  thumbnailBar.scrollLeft = scrollLeft - walk;
 });
 
-// ✅ Helpers
+// mouse wheel to scroll horizontally (fix for laptop/desktop)
+thumbnailBar.addEventListener("wheel", (e) => {
+  if (!e.deltaY && !e.deltaX) return;
+  e.preventDefault();
+  thumbnailBar.scrollLeft += e.deltaY; // wheel scroll moves horizontally
+});
+
+// ----- Thumbnail toggle (desktop + mobile) -----
+thumbToggle.addEventListener("click", () => {
+  const isHidden = thumbnailBar.classList.contains("hidden") || !thumbnailBar.classList.contains("show");
+  if (isHidden) {
+    thumbnailBar.classList.remove("hidden");
+    thumbnailBar.classList.add("show");
+    thumbToggle.textContent = "📕 Hide Thumbnails";
+  } else {
+    thumbnailBar.classList.add("hidden");
+    thumbnailBar.classList.remove("show");
+    thumbToggle.textContent = "📖 Show Thumbnails";
+  }
+});
+
+// ----- Keyboard controls -----
+document.addEventListener("keydown", (e) => {
+  if (!pageFlip) return;
+  switch (e.key) {
+    case "ArrowLeft": pageFlip.flipPrev(); break;
+    case "ArrowRight": pageFlip.flipNext(); break;
+    case "f": case "F": toggleFullscreen(); break;
+    case "m": case "M": toggleSound(); break;
+    case " ": e.preventDefault(); pageFlip.flipNext(); break;
+  }
+});
+
+// ----- Helpers -----
 function toggleFullscreen() {
-  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-  else document.exitFullscreen();
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
 }
 function toggleSound() {
   soundOn = !soundOn;
