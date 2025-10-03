@@ -1,25 +1,72 @@
-let pdfDoc = null,
-    totalPages = 0,
-    scale = 1.2,
-    soundOn = localStorage.getItem("soundOn") !== "false",
-    pageFlip = null,
-    lastPage = parseInt(localStorage.getItem("lastPage")) || 1;
+// 🔹 Firebase Config (replace with your project config)
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
+// 🔹 Elements
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
 const flipbook = document.getElementById("flipbook");
 const loader = document.getElementById("loader");
 const loaderText = document.getElementById("loaderText");
-const navbar = document.getElementById("navbar");
+const welcomeUser = document.getElementById("welcomeUser");
+const logoutBtn = document.getElementById("logoutBtn");
+const loginOverlay = document.getElementById("loginOverlay");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
+const signupBtn = document.getElementById("signupBtn");
+const authMessage = document.getElementById("authMessage");
 
-// ✅ Load PDF
-pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
-  pdfDoc = pdf;
-  totalPages = pdf.numPages;
-  renderPages();
+// 🔹 PDF/Flipbook Vars
+let pdfDoc = null,
+    totalPages = 0,
+    scale = 1.2,
+    soundOn = true,
+    pageFlip = null;
+
+// ✅ Auth Handlers
+loginBtn.addEventListener("click", () => {
+  auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
+    .catch(err => authMessage.textContent = err.message);
+});
+signupBtn.addEventListener("click", () => {
+  auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value)
+    .catch(err => authMessage.textContent = err.message);
+});
+logoutBtn.addEventListener("click", () => {
+  auth.signOut().then(() => location.reload());
 });
 
-// ✅ Render all pages into flipbook
+// ✅ Auth State
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loginOverlay.style.display = "none";
+    let username = user.email.split("@")[0];
+    welcomeUser.textContent = `Welcome, ${username}`;
+    logoutBtn.style.display = "inline-block";
+    loadPDF();
+  } else {
+    loginOverlay.style.display = "flex";
+    welcomeUser.textContent = "";
+    logoutBtn.style.display = "none";
+  }
+});
+
+// ✅ Load PDF
+function loadPDF() {
+  pdfjsLib.getDocument("yourpdf.pdf").promise.then(pdf => {
+    pdfDoc = pdf;
+    totalPages = pdf.numPages;
+    renderPages();
+  });
+}
+
+// ✅ Render all pages
 async function renderPages() {
   const pages = [];
   for (let i = 1; i <= totalPages; i++) {
@@ -36,23 +83,17 @@ async function renderPages() {
     loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
-  // Reset container
   flipbook.innerHTML = "";
+  if (pageFlip) pageFlip.destroy();
 
-  // Destroy previous instance if exists
-  if (pageFlip) {
-    pageFlip.destroy();
-  }
-
-  // ✅ Init PageFlip
   pageFlip = new St.PageFlip(flipbook, {
     width: 500,
     height: 700,
     size: "stretch",
     minWidth: 315,
-    maxWidth: 2000,
+    maxWidth: 1200,
     minHeight: 400,
-    maxHeight: 2000,
+    maxHeight: 1600,
     maxShadowOpacity: 0.5,
     showCover: true,
     useMouseEvents: true,
@@ -60,43 +101,28 @@ async function renderPages() {
   });
 
   pageFlip.loadFromHTML(pages);
-
-  // Show loader fade out
-  if (!loader.classList.contains("fade-out")) {
-    loader.classList.add("fade-out");
-    setTimeout(() => { loader.style.display = "none"; }, 800);
-  }
-
-  // Resume popup if lastPage exists
-  if (lastPage > 1) {
-    showResumePopup();
-  } else {
-    pageFlip.turnToPage(0);
-    updatePageInfo(1);
-  }
+  updatePageInfo(1);
 
   pageFlip.on("flip", (e) => {
-    const currentPage = e.data + 1;
-    updatePageInfo(currentPage);
-    localStorage.setItem("lastPage", currentPage);
+    updatePageInfo(e.data + 1);
     if (soundOn) flipSound.play();
-    showNavbar();
   });
+
+  loader.classList.add("fade-out");
+  setTimeout(() => loader.style.display = "none", 800);
 }
 
-// ✅ Render single page
 function renderPage(num, canvas) {
   return pdfDoc.getPage(num).then(page => {
     const viewport = page.getViewport({ scale: scale });
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-
     return page.render({ canvasContext: ctx, viewport: viewport }).promise;
   });
 }
 
-// ✅ Update page info
+// ✅ Page Info
 function updatePageInfo(pageNum) {
   pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
@@ -104,11 +130,9 @@ function updatePageInfo(pageNum) {
 // ✅ Navigation
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
-  showNavbar();
 });
 document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
-  showNavbar();
 });
 
 // ✅ Fullscreen
@@ -123,48 +147,12 @@ document.getElementById("fullscreen").addEventListener("click", () => {
 // ✅ Sound toggle
 document.getElementById("soundToggle").addEventListener("click", () => {
   soundOn = !soundOn;
-  localStorage.setItem("soundOn", soundOn);
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 });
-document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 
-// ✅ Auto-hide navbar
-let hideTimeout;
-function showNavbar() {
-  navbar.classList.remove("hidden");
-  clearTimeout(hideTimeout);
-  hideTimeout = setTimeout(() => {
-    navbar.classList.add("hidden");
-  }, 3000);
-}
-document.addEventListener("mousemove", showNavbar);
-document.addEventListener("keydown", showNavbar);
-
-// ✅ Resume popup logic
-function showResumePopup() {
-  const popup = document.getElementById("resumePopup");
-  popup.classList.add("active");
-
-  document.getElementById("resumeYes").onclick = () => {
-    popup.classList.remove("active");
-    pageFlip.turnToPage(lastPage - 1);
-    updatePageInfo(lastPage);
-  };
-  document.getElementById("resumeNo").onclick = () => {
-    popup.classList.remove("active");
-    pageFlip.turnToPage(0);
-    updatePageInfo(1);
-  };
-}
-
-// ✅ Keyboard navigation (arrows)
+// ✅ Keyboard Support
 document.addEventListener("keydown", (e) => {
   if (!pageFlip) return;
-  if (e.key === "ArrowLeft") {
-    pageFlip.flipPrev();
-    showNavbar();
-  } else if (e.key === "ArrowRight") {
-    pageFlip.flipNext();
-    showNavbar();
-  }
+  if (e.key === "ArrowLeft") pageFlip.flipPrev();
+  if (e.key === "ArrowRight") pageFlip.flipNext();
 });
