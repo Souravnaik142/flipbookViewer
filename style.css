@@ -1,112 +1,44 @@
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #111;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  overflow: hidden;
+:root{
+  --bg:#111;
+  --panel:#222;
+  --muted:#666;
+  --accent:#00ffcc;
+  --text:#fff;
 }
 
-/* Loader */
-.loader-overlay {
-  position: fixed;
-  inset: 0;
-  background: #111;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+.navbar{
+  display:flex;gap:8px;align-items:center;justify-content:center;padding:10px;background:var(--panel);
+  position:sticky;top:0;z-index:1000;
 }
-.loader-content {
-  text-align: center;
-  color: white;
-}
-.spinner {
-  border: 6px solid #444;
-  border-top: 6px solid #fff;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  margin: auto;
-  animation: spin 1s linear infinite;
-}
-@keyframes spin {
-  100% { transform: rotate(360deg); }
-}
+.navbar button{background:#333;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+.navbar button:hover{background:#444}
 
-/* Navbar */
-.navbar {
-  display: flex;
-  gap: 10px;
-  margin: 10px;
+.zoom-wrapper{
+  width:90%;height:calc(100vh - 96px);margin:14px auto 28px;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;touch-action:none;background:transparent;
 }
-.navbar button {
-  background: #333;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.navbar button:hover {
-  background: #555;
-}
+.zoom-wrapper > .flipbook{transform-origin:center center;transition:transform .18s ease;will-change:transform;cursor:grab}
+.zoom-wrapper > .flipbook.dragging{cursor:grabbing}
 
-/* Reset button smart visibility */
-#resetView {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  position: relative;
-}
-#resetView.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
+/* loader */
+.loader-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.9);z-index:9999;opacity:1;transition:opacity .6s}
+.loader-overlay.fade-out{opacity:0;pointer-events:none}
+.loader-content{text-align:center}
+.spinner{width:48px;height:48px;border-radius:50%;border:5px solid #444;border-top-color:var(--accent);animation:spin 1s linear infinite;margin:8px auto}
+@keyframes spin{100%{transform:rotate(360deg)}}
+#loaderText{color:var(--text);margin-top:8px;font-size:15px}
 
-/* Tooltip */
-#resetView::after {
-  content: "Reset View";
-  position: absolute;
-  bottom: -28px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-#resetView:hover::after {
-  opacity: 1;
-}
+/* error */
+.error-box{position:fixed;left:12px;right:12px;top:72px;background:#7a1f1f;color:#fff;padding:12px;border-radius:8px;z-index:11000}
 
-/* Zoom wrapper */
-.zoom-wrapper {
-  margin-top: 10px;
-  width: 90%;
-  height: 85%;
-  overflow: hidden;
-  touch-action: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #111;
-}
-.zoom-wrapper > .flipbook {
-  transform-origin: center center;
-  transition: transform 0.2s ease;
-  will-change: transform;
-  cursor: grab;
-}
-.zoom-wrapper > .flipbook.dragging {
-  cursor: grabbing;
-}
+/* reset button visibility + tooltip */
+#resetView{opacity:0;pointer-events:none;transition:opacity .3s}
+#resetView.visible{opacity:1;pointer-events:auto}
+#resetView{position:relative}
+#resetView::after{content:"Reset View";position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);padding:6px 8px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .2s}
+#resetView:hover::after{opacity:1}
+
+/* page content fallback sizing */
+.flipbook .page img{display:block;width:100%;height:auto}
