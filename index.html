@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Flipbook Viewer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 
   <!-- PDF.js -->
@@ -13,29 +14,32 @@
   <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
 <body>
-  <!-- Loader -->
-  <div id="loader" class="loader-overlay">
-    <div class="loader-content">
-      <div class="spinner"></div>
-      <div id="loaderText">Loading your book...</div>
+  <!-- Full viewer container: navbar + flipbook + thumbnails -->
+  <div id="viewerContainer" class="viewer-container">
+    <!-- Loader -->
+    <div id="loader" class="loader-overlay">
+      <div class="loader-content">
+        <div class="spinner"></div>
+        <div id="loaderText">Loading your book...</div>
+      </div>
     </div>
+
+    <!-- Navigation bar -->
+    <nav class="navbar">
+      <button id="prevPage" type="button">⬅ Prev</button>
+      <span id="pageInfo"></span>
+      <button id="nextPage" type="button">Next ➡</button>
+      <button id="fullscreen" type="button">⛶</button>
+      <button id="soundToggle" type="button">🔊</button>
+      <button id="thumbToggle" type="button">📚</button>
+    </nav>
+
+    <!-- Flipbook container -->
+    <div id="flipbook" class="flipbook"></div>
+
+    <!-- Thumbnail strip -->
+    <div id="thumbnailStrip" class="thumbnail-strip" tabindex="-1" aria-label="Page thumbnails"></div>
   </div>
-
-  <!-- Navigation bar -->
-  <nav class="navbar">
-    <button id="prevPage">⬅ Prev</button>
-    <span id="pageInfo"></span>
-    <button id="nextPage">Next ➡</button>
-    <button id="fullscreen">⛶</button>
-    <button id="soundToggle">🔊</button>
-    <button id="thumbToggle">📚</button>
-  </nav>
-
-  <!-- Flipbook container -->
-  <div id="flipbook" class="flipbook"></div>
-
-  <!-- Thumbnail strip -->
-  <div id="thumbnailStrip" class="thumbnail-strip"></div>
 
   <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
