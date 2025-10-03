@@ -1,131 +1,127 @@
-<script>
-  let pdfDoc = null,
-      totalPages = 0,
-      scale = 1.2,
-      soundOn = true,
-      pageFlip = null; // keep global
+let pdfDoc = null,
+    totalPages = 0,
+    scale = 1.2,
+    soundOn = true,
+    pageFlip = null; // global
 
-  const pageInfo = document.getElementById("pageInfo");
-  const flipSound = document.getElementById("flipSound");
-  const flipbook = document.getElementById("flipbook");
-  const loader = document.getElementById("loader");
-  const loaderText = document.getElementById("loaderText");
+const pageInfo = document.getElementById("pageInfo");
+const flipSound = document.getElementById("flipSound");
+const flipbook = document.getElementById("flipbook");
+const loader = document.getElementById("loader");
+const loaderText = document.getElementById("loaderText");
 
-  // Load PDF
-  pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
-    pdfDoc = pdf;
-    totalPages = pdf.numPages;
+// ✅ Load PDF
+pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
+  pdfDoc = pdf;
+  totalPages = pdf.numPages;
+  renderPages();
+});
+
+// ✅ Render all pages into flipbook
+async function renderPages() {
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "page";
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "pdf-page";
+    wrapper.appendChild(canvas);
+
+    await renderPage(i, canvas);
+    pages.push(wrapper);
+
+    loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
+  }
+
+  // Reset container
+  flipbook.innerHTML = "";
+
+  // Destroy previous instance if exists
+  if (pageFlip) {
+    pageFlip.destroy();
+  }
+
+  // ✅ Init PageFlip
+  pageFlip = new St.PageFlip(flipbook, {
+    width: 500,
+    height: 700,
+    size: "stretch",
+    minWidth: 315,
+    maxWidth: 1200,
+    minHeight: 400,
+    maxHeight: 1600,
+    maxShadowOpacity: 0.5,
+    showCover: true,
+    useMouseEvents: true,
+    mobileScrollSupport: true,
+  });
+
+  pageFlip.loadFromHTML(pages);
+  updatePageInfo(1);
+
+  pageFlip.on("flip", (e) => {
+    updatePageInfo(e.data + 1);
+    if (soundOn) flipSound.play();
+  });
+
+  // Fade out loader (only once)
+  if (!loader.classList.contains("fade-out")) {
+    loader.classList.add("fade-out");
+    setTimeout(() => {
+      loader.style.display = "none";
+    }, 800);
+  }
+}
+
+// ✅ Render single page
+function renderPage(num, canvas) {
+  return pdfDoc.getPage(num).then(page => {
+    const viewport = page.getViewport({ scale: scale });
+    const ctx = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+  });
+}
+
+// ✅ Update page info
+function updatePageInfo(pageNum) {
+  pageInfo.textContent = `${pageNum} / ${totalPages}`;
+}
+
+// ✅ Navigation
+document.getElementById("prevPage").addEventListener("click", () => {
+  if (pageFlip) pageFlip.flipPrev();
+});
+document.getElementById("nextPage").addEventListener("click", () => {
+  if (pageFlip) pageFlip.flipNext();
+});
+
+// ✅ Zoom
+document.getElementById("zoomIn").addEventListener("click", () => {
+  scale += 0.2;
+  renderPages();
+});
+document.getElementById("zoomOut").addEventListener("click", () => {
+  if (scale > 0.6) {
+    scale -= 0.2;
     renderPages();
-  });
-
-  // Render all PDF pages
-  async function renderPages() {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "page";
-
-      const canvas = document.createElement("canvas");
-      canvas.className = "pdf-page";
-      wrapper.appendChild(canvas);
-
-      await renderPage(i, canvas);
-      pages.push(wrapper);
-
-      // Update loader progress
-      loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
-    }
-
-    // Reset container
-    flipbook.innerHTML = "";
-
-    // ✅ Destroy old flipbook before re-creating
-    if (pageFlip) {
-      pageFlip.destroy();
-    }
-
-    // Init new PageFlip
-    pageFlip = new St.PageFlip(flipbook, {
-      width: 500,
-      height: 700,
-      size: "stretch",
-      minWidth: 315,
-      maxWidth: 1200,
-      minHeight: 400,
-      maxHeight: 1600,
-      maxShadowOpacity: 0.5,
-      showCover: true,   // first page acts as cover
-      useMouseEvents: true,
-      mobileScrollSupport: true,
-    });
-
-    pageFlip.loadFromHTML(pages);
-    updatePageInfo(1);
-
-    // Flip event
-    pageFlip.on("flip", (e) => {
-      updatePageInfo(e.data + 1);
-      if (soundOn) flipSound.play();
-    });
-
-    // Fade out loader (only on first load)
-    if (!loader.classList.contains("fade-out")) {
-      loader.classList.add("fade-out");
-      setTimeout(() => {
-        loader.style.display = "none";
-      }, 800);
-    }
   }
+});
 
-  // Render single PDF page
-  function renderPage(num, canvas) {
-    return pdfDoc.getPage(num).then(page => {
-      const viewport = page.getViewport({ scale: scale });
-      const ctx = canvas.getContext("2d");
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      return page.render({ canvasContext: ctx, viewport: viewport }).promise;
-    });
+// ✅ Fullscreen
+document.getElementById("fullscreen").addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
   }
+});
 
-  // Update page counter
-  function updatePageInfo(pageNum) {
-    pageInfo.textContent = `${pageNum} / ${totalPages}`;
-  }
-
-  // ✅ Navigation (always calls latest pageFlip)
-  document.getElementById("prevPage").addEventListener("click", () => {
-    if (pageFlip) pageFlip.flipPrev();
-  });
-  document.getElementById("nextPage").addEventListener("click", () => {
-    if (pageFlip) pageFlip.flipNext();
-  });
-
-  // Zoom
-  document.getElementById("zoomIn").addEventListener("click", () => {
-    scale += 0.2;
-    renderPages();
-  });
-  document.getElementById("zoomOut").addEventListener("click", () => {
-    if (scale > 0.6) {
-      scale -= 0.2;
-      renderPages();
-    }
-  });
-
-  // Fullscreen
-  document.getElementById("fullscreen").addEventListener("click", () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-  });
-
-  // Sound toggle
-  document.getElementById("soundToggle").addEventListener("click", () => {
-    soundOn = !soundOn;
-    document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
-  });
-</script>
+// ✅ Sound toggle
+document.getElementById("soundToggle").addEventListener("click", () => {
+  soundOn = !soundOn;
+  document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+});
