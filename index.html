@@ -1,197 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flipbook Viewer</title>
-  <style>
-    body {
-      margin: 0;
-      background: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-    }
-
-    #toolbar {
-      background: #222;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-    }
-    #toolbar button {
-      background: #444;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      margin: 0 4px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    #toolbar button:hover {
-      background: #666;
-    }
-
-    #flipbook {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      background: #e2e2e2;
-      position: relative;
-    }
-
-    .page {
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      margin: 0 2px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-    .page canvas {
-      width: 100%;
-      height: 100%;
-    }
-
-    .double .page {
-      width: calc(50% - 4px);
-    }
-    .single .page {
-      width: 100%;
-    }
-
-    @media(max-width: 768px) {
-      #flipbook.double {
-        flex-direction: column;
-      }
-      #flipbook.double .page {
-        width: 100%;
-        margin: 4px 0;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Professional Flipbook</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="toolbar">
-    <div>
-      <button id="prev">⬅ Prev</button>
-      <button id="next">Next ➡</button>
-    </div>
-    <div id="page-num">Page 1</div>
-    <div>
-      <button id="zoom-in">🔍 +</button>
-      <button id="zoom-out">🔍 -</button>
-      <button id="fullscreen">⛶</button>
-    </div>
+
+<h2>My Course Flipbook</h2>
+
+<div id="loader" class="loader">Loading...</div>
+
+<div class="toolbar">
+  <button id="prev">← Previous</button>
+  <button id="next">Next →</button>
+  <button id="zoom">Zoom</button>
+  <button id="fullscreen">Fullscreen</button>
+  <label><input type="checkbox" id="doublePage"> Double Page View</label>
+</div>
+
+<div class="container">
+  <div class="toc" id="toc">
+    <h3>Pages</h3>
+    <div id="thumbnails"></div>
   </div>
 
-  <div id="flipbook" class="single"></div>
+  <div class="flipbook-container">
+    <div class="flipbook" id="flipbook"></div>
+  </div>
+</div>
 
-  <!-- PDF.js -->
-  <script src="pdf.js"></script>
-  <script src="pdf.worker.js"></script>
+<div id="page-number">0 / 0</div>
 
-  <script>
-    const url = "physics.pdf"; // put your PDF here
-    let pdfDoc = null;
-    let currentPage = 1;
-    let scale = 1.5;
-    let doublePage = false;
-    const flipbook = document.getElementById("flipbook");
-    const pageNumEl = document.getElementById("page-num");
-    const flipSound = new Audio("page-flip.wav"); // or mp3
+<!-- PDF.js library -->
+<script src="pdf.js"></script>
 
-    function renderPage(num, canvas) {
-      pdfDoc.getPage(num).then(page => {
-        const viewport = page.getViewport({ scale });
-        const context = canvas.getContext("2d");
-        const ratio = window.devicePixelRatio || 1;
+<!-- Flipbook JS -->
+<script src="script.js"></script>
 
-        canvas.width = viewport.width * ratio;
-        canvas.height = viewport.height * ratio;
-        canvas.style.width = viewport.width + "px";
-        canvas.style.height = viewport.height + "px";
-
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        page.render({ canvasContext: context, viewport: viewport });
-      });
-    }
-
-    function renderFlipbook() {
-      flipbook.innerHTML = "";
-
-      // check screen size
-      doublePage = window.innerWidth > 900;
-
-      flipbook.className = doublePage ? "double" : "single";
-
-      if (doublePage) {
-        let leftPage = currentPage;
-        if (leftPage % 2 === 1) leftPage--; // ensure even page on left
-
-        [leftPage, leftPage+1].forEach(p => {
-          if (p >= 1 && p <= pdfDoc.numPages) {
-            const div = document.createElement("div");
-            div.className = "page";
-            const canvas = document.createElement("canvas");
-            div.appendChild(canvas);
-            flipbook.appendChild(div);
-            renderPage(p, canvas);
-          }
-        });
-      } else {
-        const div = document.createElement("div");
-        div.className = "page";
-        const canvas = document.createElement("canvas");
-        div.appendChild(canvas);
-        flipbook.appendChild(div);
-        renderPage(currentPage, canvas);
-      }
-
-      pageNumEl.textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
-    }
-
-    function queueRender(num) {
-      if (num < 1 || num > pdfDoc.numPages) return;
-      currentPage = num;
-      renderFlipbook();
-      flipSound.play();
-    }
-
-    document.getElementById("prev").addEventListener("click", () => {
-      queueRender(currentPage - 1);
-    });
-    document.getElementById("next").addEventListener("click", () => {
-      queueRender(currentPage + 1);
-    });
-    document.getElementById("zoom-in").addEventListener("click", () => {
-      scale += 0.25;
-      renderFlipbook();
-    });
-    document.getElementById("zoom-out").addEventListener("click", () => {
-      scale = Math.max(0.5, scale - 0.25);
-      renderFlipbook();
-    });
-    document.getElementById("fullscreen").addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        document.exitFullscreen();
-      }
-    });
-
-    window.addEventListener("resize", renderFlipbook);
-
-    pdfjsLib.getDocument(url).promise.then(pdf => {
-      pdfDoc = pdf;
-      renderFlipbook();
-    });
-  </script>
 </body>
 </html>
