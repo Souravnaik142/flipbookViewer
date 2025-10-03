@@ -21,23 +21,10 @@ body {
   z-index: 1000;
 }
 
-.navbar button {
-  background: #333;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.navbar button:hover {
-  background: #00ffcc;
-  color: #111;
-}
-
 .flipbook {
   margin-top: 10px;
   width: 90%;
-  height: 85%;
+  height: 80%;
 }
 
 .page {
@@ -87,4 +74,61 @@ body {
 #loaderText {
   font-size: 18px;
   margin-top: 10px;
+}
+
+/* Thumbnail Bar */
+.thumbnail-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: #1a1a1a;
+  width: 100%;
+  padding: 8px;
+  border-top: 2px solid #333;
+  max-height: 120px;
+  transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+}
+.thumbnail-bar::-webkit-scrollbar {
+  display: none;
+}
+.thumbnail-bar.hidden {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+}
+.thumbnail {
+  flex: 0 0 auto;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border 0.3s ease;
+  background: #fff;
+}
+.thumbnail.active {
+  border: 2px solid #00ffcc;
+}
+.thumbnail canvas {
+  display: block;
+  width: 60px;
+  height: auto;
+}
+
+/* Mobile: hide thumbnails by default */
+@media (max-width: 768px) {
+  .thumbnail-bar {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0;
+    border: none;
+  }
+  .thumbnail-bar.show {
+    max-height: 120px;
+    opacity: 1;
+    padding: 8px;
+    border-top: 2px solid #333;
+  }
 }
