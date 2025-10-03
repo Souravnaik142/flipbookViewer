@@ -28,9 +28,8 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
 // Render page to fit panel
 async function renderPage(num) {
   const page = await pdfDoc.getPage(num);
-
-  const pageContainerWidth = doublePage ? flipbook.clientWidth / 2 : flipbook.clientWidth;
-  const pageContainerHeight = flipbook.clientHeight;
+const pageContainerWidth = doublePage ? flipbook.clientWidth / 2 : flipbook.clientWidth;
+const pageContainerHeight = flipbook.clientHeight;
 
   const viewport = page.getViewport({ scale: 1 });
   const scale = Math.min(pageContainerWidth / viewport.width, pageContainerHeight / viewport.height);
