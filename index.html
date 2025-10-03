@@ -11,22 +11,34 @@
   <!-- Turn.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"></script>
 
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+  <!-- Local PDF.js -->
+  <script src="pdf.js"></script>
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loadingOverlay">
+    <div class="loader"></div>
+    <p>Loading your course...</p>
+  </div>
+
+  <!-- Toolbar -->
   <div class="toolbar">
     <button id="prev">⬅ Prev</button>
     <button id="next">Next ➡</button>
     <button id="zoomIn">🔍 Zoom In</button>
     <button id="zoomOut">🔎 Zoom Out</button>
     <button id="fullscreen">⛶ Fullscreen</button>
+    <span id="pageIndicator">Page 1 / ?</span>
+    <input type="number" id="pageJump" placeholder="Go to page" min="1">
+    <button id="jumpBtn">Go</button>
   </div>
 
+  <!-- Flipbook Container -->
   <div class="container">
     <div id="flipbook"></div>
   </div>
 
+  <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
 
   <script src="script.js"></script>
