@@ -1,42 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flipbook Reader</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Flipbook (stable build)</title>
+
+  <!-- styles -->
   <link rel="stylesheet" href="style.css" />
-  <!-- PageFlip library -->
-  <link rel="stylesheet" href="https://unpkg.com/stpageflip/dist/page-flip.min.css">
-  <script src="https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-  <script src="https://unpkg.com/stpageflip/dist/page-flip.browser.min.js"></script>
+
+  <!-- pdf.js (CDN) and page-flip (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css" />
+  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
 <body>
-  <!-- Loader -->
+  <!-- loader -->
   <div id="loader" class="loader-overlay">
     <div class="loader-content">
       <div class="spinner"></div>
-      <div id="loaderText">Loading your book...</div>
+      <div id="loaderText">Loading page 0 of 0...</div>
     </div>
   </div>
 
-  <!-- Navigation bar -->
+  <!-- error box (visible if something goes wrong) -->
+  <div id="errorBox" class="error-box" style="display:none"></div>
+
+  <!-- top nav -->
   <nav class="navbar">
     <button id="prevPage">⬅ Prev</button>
-    <span id="pageInfo"></span>
+    <span id="pageInfo">0 / 0</span>
     <button id="nextPage">Next ➡</button>
     <button id="fullscreen">⛶</button>
     <button id="soundToggle">🔊</button>
     <button id="resetView">🔄 Reset</button>
   </nav>
 
-  <!-- Zoom wrapper + Flipbook -->
+  <!-- zoom wrapper (pinch/pan) + flipbook -->
   <div id="zoomWrapper" class="zoom-wrapper">
     <div id="flipbook" class="flipbook"></div>
   </div>
 
-  <!-- Flip Sound -->
-  <audio id="flipSound" src="page-flip.wav"></audio>
+  <!-- page flip sound (optional) -->
+  <audio id="flipSound" src="page-flip.wav" preload="auto"></audio>
 
+  <!-- main script -->
   <script src="script.js"></script>
 </body>
 </html>
