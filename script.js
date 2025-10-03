@@ -3,19 +3,7 @@ let pdfDoc = null,
     scale = 1.2,
     soundOn = true,
     pageFlip = null,
-    currentPageNum = 1,
-    hasOpenedOnce = false;
-
-// ✅ Book configuration
-const bookConfig = {
-  title: "My Course Book",
-  author: "John Doe",
-  frontCoverColors: ["#222", "#444"],
-  backCoverColors: ["#111", "#333"],
-  backMessage: "Thanks for reading",
-  frontCoverImage: null,   // e.g. "cover.jpg"
-  backCoverImage: null     // e.g. "back.jpg"
-};
+    currentPageNum = 1;
 
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
@@ -30,39 +18,23 @@ pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   renderPages();
 });
 
-// ✅ Render all pages
+// ✅ Render all pages into flipbook
 async function renderPages() {
   const pages = [];
-
-  // ✅ Add Front Cover
-  const cover = document.createElement("div");
-  cover.className = "page cover-page";
-  if (bookConfig.frontCoverImage) {
-    cover.style.background = `url('${bookConfig.frontCoverImage}') center/cover no-repeat`;
-  } else {
-    cover.style.background = `linear-gradient(135deg, ${bookConfig.frontCoverColors[0]}, ${bookConfig.frontCoverColors[1]})`;
-  }
-  cover.innerHTML = `
-    <div class="cover-content">
-      <h1>${bookConfig.title}</h1>
-      <p>by ${bookConfig.author}</p>
-    </div>
-  `;
-  pages.push(cover);
-
-  // ✅ Render first 2 PDF pages (quick start)
-  for (let i = 1; i <= Math.min(2, totalPages); i++) {
+  for (let i = 1; i <= totalPages; i++) {
     const wrapper = document.createElement("div");
     wrapper.className = "page";
+
     const canvas = document.createElement("canvas");
     canvas.className = "pdf-page";
     wrapper.appendChild(canvas);
+
     await renderPage(i, canvas);
     pages.push(wrapper);
+
     loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
-  // Init PageFlip
   flipbook.innerHTML = "";
   if (pageFlip) pageFlip.destroy();
 
@@ -76,7 +48,6 @@ async function renderPages() {
     maxHeight: 1600,
     maxShadowOpacity: 0.5,
     showCover: true,
-    flippingTime: 1000, // smoother
     useMouseEvents: true,
     mobileScrollSupport: true,
   });
@@ -90,53 +61,10 @@ async function renderPages() {
     if (soundOn) flipSound.play();
   });
 
-  // ✅ Intro animation only once
-  if (!hasOpenedOnce) {
-    hasOpenedOnce = true;
-    setTimeout(() => {
-      pageFlip.flipNext();
-      setTimeout(() => pageFlip.flipPrev(), 1200);
-    }, 600);
+  if (!loader.classList.contains("fade-out")) {
+    loader.classList.add("fade-out");
+    setTimeout(() => { loader.style.display = "none"; }, 800);
   }
-
-  // Fade out loader
-  loader.classList.add("fade-out");
-  setTimeout(() => { loader.style.display = "none"; }, 800);
-
-  // ✅ Background rendering
-  const bgLoader = document.getElementById("bgLoader");
-  bgLoader.style.display = "block";
-
-  setTimeout(async () => {
-    for (let i = 3; i <= totalPages; i++) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "page";
-      const canvas = document.createElement("canvas");
-      canvas.className = "pdf-page";
-      wrapper.appendChild(canvas);
-      await renderPage(i, canvas);
-      pageFlip.loadFromHTML([wrapper], "end");
-      bgLoader.textContent = `Loading page ${i} / ${totalPages}`;
-    }
-
-    // ✅ Add Back Cover
-    const backCover = document.createElement("div");
-    backCover.className = "page back-cover-page";
-    if (bookConfig.backCoverImage) {
-      backCover.style.background = `url('${bookConfig.backCoverImage}') center/cover no-repeat`;
-    } else {
-      backCover.style.background = `linear-gradient(135deg, ${bookConfig.backCoverColors[0]}, ${bookConfig.backCoverColors[1]})`;
-    }
-    backCover.innerHTML = `
-      <div class="cover-content">
-        <h2>The End</h2>
-        <p>${bookConfig.backMessage}</p>
-      </div>
-    `;
-    pageFlip.loadFromHTML([backCover], "end");
-
-    bgLoader.style.display = "none";
-  }, 100);
 }
 
 // ✅ Render single page
@@ -163,27 +91,6 @@ document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
 });
 
-// ✅ Go To Page
-function goToPage(pageNum) {
-  if (pageNum >= 1 && pageNum <= totalPages) {
-    const sheetIndex = (pageNum % 2 === 0) ? pageNum - 1 : pageNum - 2;
-    pageFlip.turnToPage(sheetIndex < 0 ? 0 : sheetIndex);
-    currentPageNum = pageNum;
-    updatePageInfo(currentPageNum);
-    document.getElementById("gotoPage").value = "";
-  }
-}
-document.getElementById("gotoBtn").addEventListener("click", () => {
-  const pageNum = parseInt(document.getElementById("gotoPage").value, 10);
-  goToPage(pageNum);
-});
-document.getElementById("gotoPage").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    const pageNum = parseInt(e.target.value, 10);
-    goToPage(pageNum);
-  }
-});
-
 // ✅ Fullscreen
 document.getElementById("fullscreen").addEventListener("click", () => {
   if (!document.fullscreenElement) {
@@ -199,15 +106,56 @@ document.getElementById("soundToggle").addEventListener("click", () => {
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 });
 
-// ✅ Keyboard support
+// ✅ Go To Page
+function goToPage(pageNum) {
+  if (pageNum >= 1 && pageNum <= totalPages) {
+    const sheetIndex = (pageNum % 2 === 0) ? pageNum - 1 : pageNum - 2;
+    pageFlip.turnToPage(sheetIndex < 0 ? 0 : sheetIndex);
+    currentPageNum = pageNum;
+    updatePageInfo(currentPageNum);
+    document.getElementById("gotoPage").value = ""; // clear after jump
+  }
+}
+document.getElementById("gotoBtn").addEventListener("click", () => {
+  const pageNum = parseInt(document.getElementById("gotoPage").value, 10);
+  goToPage(pageNum);
+});
+document.getElementById("gotoPage").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const pageNum = parseInt(e.target.value, 10);
+    goToPage(pageNum);
+  }
+});
+
+// ✅ Keyboard shortcuts
 document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft") pageFlip.flipPrev();
-  if (e.key === "ArrowRight" || e.key === " ") pageFlip.flipNext();
-  if (e.key.toLowerCase() === "f") {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
+  if (!pageFlip) return;
+
+  switch (e.key) {
+    case "ArrowLeft":
+      pageFlip.flipPrev();
+      break;
+    case "ArrowRight":
+      pageFlip.flipNext();
+      break;
+    case "ArrowUp":
+      goToPage(1);
+      break;
+    case "ArrowDown":
+      goToPage(totalPages);
+      break;
+    case "f":
+    case "F":
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+      break;
+    case "m":
+    case "M":
+      soundOn = !soundOn;
+      document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+      break;
   }
 });
