@@ -1,4 +1,4 @@
-const url = "physics.pdf";
+const url = "yourcourse.pdf";
 
 let pdfDoc = null,
     currentPage = 1,
