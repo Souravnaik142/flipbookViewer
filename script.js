@@ -19,18 +19,25 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
     const pageDiv = document.createElement('div');
     pageDiv.classList.add('page');
     pageDiv.style.zIndex = pdf.numPages - i;
+
+    // Front + back
+    const front = document.createElement('div');
+    front.classList.add('front');
+    const back = document.createElement('div');
+    back.classList.add('back');
+    pageDiv.appendChild(front);
+    pageDiv.appendChild(back);
+
     flipbook.appendChild(pageDiv);
 
     pdf.getPage(i + 1).then(page => {
       const canvas = document.createElement('canvas');
-      pageDiv.appendChild(canvas);
+      front.appendChild(canvas);   // ✅ canvas only on front side
       const ctx = canvas.getContext('2d');
 
-      const viewport = page.getViewport({ scale:1 });
-
-      // Initial render
+      const viewport = page.getViewport({ scale: 1 });
       renderPageCanvas(page, canvas, viewport);
-      
+
       // Thumbnails
       const thumbCanvas = document.createElement('canvas');
       const thumbCtx = thumbCanvas.getContext('2d');
@@ -39,13 +46,13 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
       thumbCanvas.height = viewport.height * thumbScale;
       page.render({ canvasContext: thumbCtx, viewport: page.getViewport({ scale: thumbScale }) });
       thumbCanvas.classList.add('thumbnail');
-      if(i===0) thumbCanvas.classList.add('active');
+      if (i === 0) thumbCanvas.classList.add('active');
       thumbnailsContainer.appendChild(thumbCanvas);
-      thumbCanvas.addEventListener('click', ()=>goToPage(i));
+      thumbCanvas.addEventListener('click', () => goToPage(i));
     });
   }
   updatePageNumber();
-  window.addEventListener('resize', ()=>updatePageSizes());
+  window.addEventListener('resize', () => updatePageSizes());
 });
 
 // Render PDF page into canvas
@@ -71,7 +78,7 @@ function renderPageCanvas(pdfPage, canvas, viewport){
 function updatePageSizes(){
   const allPages = document.querySelectorAll('.page');
   allPages.forEach((page, i)=>{
-    const canvas = page.querySelector('canvas');
+    const canvas = page.querySelector('.front canvas');
     if(!canvas) return;
     pdfDoc.getPage(i+1).then(pdfPage=>{
       renderPageCanvas(pdfPage, canvas, pdfPage.getViewport({ scale:1 }));
