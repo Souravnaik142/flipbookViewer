@@ -11,7 +11,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
-const db = firebase.firestore();
 
 let pdfDoc = null,
     totalPages = 0,
@@ -38,13 +37,17 @@ loginForm.addEventListener("submit", async (e) => {
   try {
     await auth.signInWithEmailAndPassword(email, password);
 
-    const doc = await db.collection("users").doc(email).get();
-    isPaidUser = doc.exists && doc.data().paid === true;
+    // Check JSON for paid status
+    fetch("users.json")
+      .then(res => res.json())
+      .then(users => {
+        isPaidUser = users[email] && users[email].paid === true;
 
-    authContainer.style.display = "none";
-    viewer.style.display = "block";
+        authContainer.style.display = "none";
+        viewer.style.display = "block";
 
-    loadPDF();
+        loadPDF();
+      });
   } catch (err) {
     errorMsg.textContent = "❌ " + err.message;
   }
