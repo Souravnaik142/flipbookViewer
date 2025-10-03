@@ -26,21 +26,18 @@
     <button id="prevPage">⬅ Prev</button>
     <span id="pageInfo"></span>
     <button id="nextPage">Next ➡</button>
-
-    <input type="number" id="gotoPage" placeholder="Go to..." min="1" style="width:70px;">
-    <input type="text" id="searchInput" placeholder="Search text..." />
-    <button id="searchBtn">🔍</button>
-
     <button id="fullscreen">⛶</button>
     <button id="soundToggle">🔊</button>
-    <button id="thumbToggle">📖 Thumbnails</button>
+
+    <input type="number" id="gotoPage" placeholder="Page #" min="1" />
+    <button id="gotoBtn">Go</button>
+
+    <input type="text" id="searchInput" placeholder="Search text..." />
+    <button id="searchBtn">🔍</button>
   </nav>
 
   <!-- Flipbook container -->
   <div id="flipbook" class="flipbook"></div>
-
-  <!-- Thumbnails -->
-  <div id="thumbnailBar" class="thumbnail-bar hidden"></div>
 
   <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
