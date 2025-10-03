@@ -1,117 +1,79 @@
 body {
   margin: 0;
-  padding: 0;
-  background: #111;
-  color: white;
   font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
   display: flex;
   flex-direction: column;
+  align-items: center;
   height: 100vh;
 }
 
-#controls {
-  margin: 10px;
-  z-index: 10;
+.navbar {
+  background: #222;
+  padding: 10px;
   display: flex;
   gap: 10px;
   justify-content: center;
-}
-
-#controls button {
-  padding: 5px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 6px;
-  border: none;
-  background: #333;
-  color: white;
-  transition: 0.2s;
-}
-#controls button:hover {
-  background: #555;
-}
-
-#zoomWrapper {
-  width: 90vw;
-  height: 90vh;
-  margin: auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  touch-action: none;
-  background: #111;
-  transform-origin: center center;
-  position: relative;
-}
-
-#flipbook {
   width: 100%;
-  height: 100%;
-}
-
-.page img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-/* Loader */
-#loader {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-size: 20px;
-  z-index: 2000;
-}
-
-/* Help overlay */
-#helpOverlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: sticky;
+  top: 0;
   z-index: 1000;
+}
+
+.flipbook {
+  margin-top: 10px;
+  width: 90%;
+  height: 85%;
+}
+
+.page {
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.pdf-page {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Loader Overlay */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.8s ease;
 }
-
-#helpContent {
-  background: #222;
-  padding: 20px 30px;
-  border-radius: 12px;
-  max-width: 400px;
-  text-align: left;
-  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+.loader-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
 }
-
-#helpContent h2 {
-  margin-top: 0;
+.loader-content {
   text-align: center;
 }
-
-#helpContent ul {
-  padding-left: 20px;
-  margin: 15px 0;
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 6px solid #444;
+  border-top: 6px solid #00ffcc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+#loaderText {
+  font-size: 18px;
+  margin-top: 10px;
 }
 
-#helpContent button {
-  display: block;
-  margin: 10px auto 0;
-  padding: 6px 14px;
-  background: #444;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  cursor: pointer;
-}
-#helpContent button:hover {
-  background: #666;
-}
+
