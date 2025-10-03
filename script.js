@@ -16,7 +16,7 @@ const thumbToggle = document.getElementById("thumbToggle");
 document.body.setAttribute("tabindex", "0");
 document.body.focus();
 
-// ✅ Load PDF (change file name here)
+// ✅ Load PDF
 pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   pdfDoc = pdf;
   totalPages = pdf.numPages;
@@ -26,7 +26,7 @@ pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
 // ✅ Render all pages into flipbook
 async function renderPages() {
   const pages = [];
-  thumbnailStrip.innerHTML = ""; // clear old thumbnails
+  thumbnailStrip.innerHTML = "";
 
   for (let i = 1; i <= totalPages; i++) {
     const wrapper = document.createElement("div");
@@ -39,7 +39,7 @@ async function renderPages() {
     await renderPage(i, canvas);
     pages.push(wrapper);
 
-    createThumbnail(i); // make thumbnail
+    createThumbnail(i);
     loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
@@ -114,6 +114,7 @@ function createThumbnail(pageNum) {
 
       img.addEventListener("click", () => {
         if (pageFlip) pageFlip.flip(pageNum - 1);
+        setTimeout(() => document.body.focus(), 50); // regain focus
       });
 
       thumbnailStrip.appendChild(img);
@@ -131,7 +132,6 @@ function highlightThumbnail(pageNum) {
   if (active) {
     active.classList.add("active");
 
-    // Auto-scroll center
     const stripRect = thumbnailStrip.getBoundingClientRect();
     const activeRect = active.getBoundingClientRect();
 
@@ -143,35 +143,40 @@ function highlightThumbnail(pageNum) {
 // ✅ Navigation buttons
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
+  setTimeout(() => document.body.focus(), 50);
 });
 document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
+  setTimeout(() => document.body.focus(), 50);
 });
 
-// ✅ Fullscreen
+// ✅ Fullscreen (fix focus issue)
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    flipbook.requestFullscreen().then(() => {
+      setTimeout(() => document.body.focus(), 100);
+    });
+  } else {
+    document.exitFullscreen().then(() => {
+      setTimeout(() => document.body.focus(), 100);
+    });
+  }
+}
 document.getElementById("fullscreen").addEventListener("click", toggleFullscreen);
 
 // ✅ Sound toggle
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+}
 document.getElementById("soundToggle").addEventListener("click", toggleSound);
 
 // ✅ Thumbnail toggle
 thumbToggle.addEventListener("click", () => {
   thumbnailStrip.classList.toggle("hidden");
   thumbToggle.textContent = thumbnailStrip.classList.contains("hidden") ? "📕" : "📚";
+  setTimeout(() => document.body.focus(), 50);
 });
-
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
-}
-
-function toggleSound() {
-  soundOn = !soundOn;
-  document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
-}
 
 // ✅ Keyboard navigation (always on window)
 window.addEventListener("keydown", (e) => {
@@ -205,16 +210,9 @@ window.addEventListener("keydown", (e) => {
       break;
     case "t":
     case "T":
-      thumbToggle.click(); // shortcut for thumbnails toggle
+      thumbToggle.click();
       break;
   }
-});
-
-// ✅ Ensure body regains focus after any UI click
-document.querySelectorAll("button, #thumbnailStrip img").forEach(el => {
-  el.addEventListener("click", () => {
-    setTimeout(() => document.body.focus(), 50);
-  });
 });
 
 // ✅ Resize handling
