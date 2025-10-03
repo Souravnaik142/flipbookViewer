@@ -21,6 +21,19 @@ body {
   z-index: 1000;
 }
 
+.navbar button {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.navbar button:hover {
+  background: #00ffcc;
+  color: #111;
+}
+
 .flipbook {
   margin-top: 10px;
   width: 90%;
@@ -75,5 +88,3 @@ body {
   font-size: 18px;
   margin-top: 10px;
 }
-
-
