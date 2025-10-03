@@ -15,12 +15,10 @@ const auth = firebase.auth();
 let pdfDoc = null,
     totalPages = 0,
     scale = 1.2,
-    soundOn = true,
     pageFlip = null,
     isPaidUser = false;
 
 // Elements
-const loginForm = document.getElementById("loginForm");
 const authContainer = document.getElementById("authContainer");
 const viewer = document.getElementById("viewer");
 const errorMsg = document.getElementById("errorMsg");
@@ -28,11 +26,25 @@ const flipbook = document.getElementById("flipbook");
 const flipSound = document.getElementById("flipSound");
 const pageInfo = document.getElementById("pageInfo");
 
-// ✅ Login
-loginForm.addEventListener("submit", async (e) => {
+// ✅ Signup
+document.getElementById("signupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const email = document.getElementById("signupEmail").value;
+  const password = document.getElementById("signupPassword").value;
+
+  try {
+    await auth.createUserWithEmailAndPassword(email, password);
+    alert("✅ Signup successful! Please login.");
+  } catch (err) {
+    errorMsg.textContent = "❌ " + err.message;
+  }
+});
+
+// ✅ Login
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
 
   try {
     await auth.signInWithEmailAndPassword(email, password);
@@ -102,7 +114,7 @@ async function renderPages() {
 
   pageFlip.on("flip", (e) => {
     updatePageInfo(e.data + 1);
-    if (soundOn) flipSound.play();
+    flipSound.play();
   });
 }
 
