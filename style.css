@@ -1,9 +1,5 @@
 /* General reset */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: Arial, sans-serif;
@@ -27,16 +23,10 @@ body {
   z-index: 2000;
   transition: opacity 0.8s ease;
 }
-.loader-overlay.fade-out {
-  opacity: 0;
-  pointer-events: none;
-}
-.loader-content {
-  text-align: center;
-}
+.loader-overlay.fade-out { opacity: 0; pointer-events: none; }
+.loader-content { text-align: center; }
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   border: 4px solid #555;
   border-top: 4px solid #09f;
   border-radius: 50%;
@@ -64,13 +54,8 @@ body {
   color: #fff;
   transition: background 0.2s;
 }
-.navbar button:hover {
-  background: #666;
-}
-#pageInfo {
-  padding: 6px 12px;
-  font-size: 16px;
-}
+.navbar button:hover { background: #666; }
+#pageInfo { padding: 6px 12px; font-size: 16px; }
 
 /* Viewer container */
 .viewer-container {
@@ -97,24 +82,23 @@ body {
   overflow: hidden;
   transition: height 0.25s ease;
 }
-
-/* When thumbs are shown, shrink flipbook */
 .viewer-container.show-thumbs .flipbook {
-  height: calc(100% - 160px); /* leave space for thumbs bar */
+  height: calc(100% - 160px); /* space for thumbnails */
 }
 
 /* Thumbnail strip */
 .thumbnail-strip {
   display: flex;
-  overflow-x: auto;
+  flex-shrink: 0;
+  overflow-x: auto;    /* ✅ scroll horizontally */
+  overflow-y: hidden;
   padding: 8px;
   background: #1a1a1a;
   gap: 8px;
   border-top: 2px solid #333;
-  flex-shrink: 0;
-  transition: max-height 0.25s ease, opacity 0.25s ease;
   max-height: 150px;
   opacity: 1;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
 }
 .thumbnail-strip.hidden {
   max-height: 0;
@@ -123,6 +107,7 @@ body {
 }
 .thumbnail-strip img {
   height: 120px;
+  flex-shrink: 0;      /* ✅ thumbnails don’t shrink */
   cursor: pointer;
   border-radius: 4px;
   transition: transform 0.2s, border 0.2s;
@@ -146,6 +131,4 @@ body {
   color: white;
   margin-bottom: 6px;
 }
-#thumbToggle:hover {
-  background: #666;
-}
+#thumbToggle:hover { background: #666; }
