@@ -1,31 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Flipbook</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Your Course Flipbook</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Turn.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"></script>
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
 </head>
 <body>
-
-<div id="flipbook-container">
-  <div id="flipbook"></div>
-  <div id="thumbnails"></div>
-  <div id="controls">
-    <button id="prev">Prev</button>
-    <button id="next">Next</button>
-    <button id="zoom">Zoom</button>
-    <button id="fullscreen">Fullscreen</button>
-    <label><input type="checkbox" id="doublePage"> Double Page</label>
-    <input type="number" id="goto" min="1" placeholder="Go to page">
-    <span id="page-number"></span>
+  <div class="toolbar">
+    <button id="prev">⬅ Prev</button>
+    <button id="next">Next ➡</button>
+    <button id="zoomIn">🔍 Zoom In</button>
+    <button id="zoomOut">🔎 Zoom Out</button>
+    <button id="fullscreen">⛶ Fullscreen</button>
   </div>
-  <div id="loader">Loading PDF...</div>
-</div>
 
-<!-- PDF.js -->
-<script src="pdf.js"></script>
-<script src="pdf.worker.js"></script>
-<script src="script.js"></script>
+  <div class="container">
+    <div id="flipbook"></div>
+  </div>
+
+  <audio id="flipSound" src="page-flip.wav"></audio>
+
+  <script src="script.js"></script>
 </body>
 </html>
