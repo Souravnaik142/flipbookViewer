@@ -1,51 +1,110 @@
+/* General Page Style */
 body {
   margin: 0;
-  background: #f0f0f0;
+  background: linear-gradient(135deg, #1f1c2c, #928dab);
   display: flex;
   flex-direction: column;
   align-items: center;
   height: 100vh;
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  overflow: hidden;
 }
 
+/* Loading Overlay */
+#loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,20,20,0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  color: #fff;
+  font-size: 20px;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #ff4081;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* Toolbar */
 .toolbar {
-  margin: 10px;
+  background: rgba(0,0,0,0.6);
+  padding: 10px 15px;
   display: flex;
   gap: 10px;
+  align-items: center;
+  border-radius: 10px;
+  margin: 10px;
 }
 
 button {
   padding: 8px 14px;
   border: none;
-  background: #0077ff;
+  background: linear-gradient(135deg, #ff4081, #ff7eb3);
   color: white;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: bold;
+  transition: all 0.3s ease;
 }
 
 button:hover {
-  background: #005bbb;
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #ff7eb3, #ff4081);
 }
 
+#pageIndicator {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: bold;
+  background: #444;
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+#pageJump {
+  width: 80px;
+  padding: 5px;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+}
+
+/* Flipbook Container */
 .container {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  flex: 1;
   width: 100%;
-  overflow: hidden;
 }
 
 #flipbook {
   width: 1000px;
   height: 650px;
   background: white;
-  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.7);
+  overflow: hidden;
 }
 
 canvas {
   width: 100%;
   height: 100%;
   display: block;
+  border-radius: 12px;
 }
