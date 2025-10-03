@@ -6,7 +6,7 @@ const thumbnailsContainer = document.getElementById('thumbnails');
 const loader = document.getElementById('loader');
 const pageNumber = document.getElementById('page-number');
 let doublePage = false;
-const flipSound = new Audio('page-flip.mp3'); // optional
+const flipSound = new Audio('page-flip.wav'); // optional
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
 
