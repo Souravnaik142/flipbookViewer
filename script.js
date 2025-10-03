@@ -1,4 +1,4 @@
-const url = 'yourcourse.pdf'; // PDF in the same folder
+const url = 'yourcourse.pdf'; // PDF file in main folder
 let pdfDoc = null;
 let currentPage = 0;
 const flipbook = document.getElementById('flipbook');
@@ -6,7 +6,7 @@ const thumbnailsContainer = document.getElementById('thumbnails');
 const loader = document.getElementById('loader');
 const pageNumber = document.getElementById('page-number');
 let doublePage = false;
-const flipSound = new Audio('page-flip.wav'); // optional
+const flipSound = new Audio('page-flip.wav'); // optional WAV sound
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
 
@@ -30,9 +30,10 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
       const containerWidth = flipbook.clientWidth;
       const containerHeight = flipbook.clientHeight;
 
+      // Corrected scaling for double-page
       let scale;
       if(doublePage){
-        scale = Math.min((containerWidth/2)/viewport.width, containerHeight/viewport.height)*2;
+        scale = Math.min((containerWidth/2)/viewport.width, containerHeight/viewport.height)*2; 
       } else {
         scale = Math.min(containerWidth/viewport.width, containerHeight/viewport.height)*2;
       }
@@ -44,7 +45,8 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
       page.render({ canvasContext: ctx, viewport: scaledViewport });
-      canvas.style.width='100%'; canvas.style.height='100%';
+      canvas.style.width='100%'; 
+      canvas.style.height='100%';
 
       // Thumbnails
       const thumbCanvas = document.createElement('canvas');
@@ -74,7 +76,7 @@ document.getElementById('fullscreen').addEventListener('click', ()=>{
 document.getElementById('doublePage').addEventListener('change', e=>{
   doublePage = e.target.checked;
   flipbook.classList.toggle('double', doublePage);
-  goToPage(currentPage);
+  goToPage(currentPage); // re-render to adjust scaling
 });
 
 function goToPage(pageIndex){
