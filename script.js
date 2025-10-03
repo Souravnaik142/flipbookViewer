@@ -1,8 +1,8 @@
-const url = "yourcourse.pdf";
+const url = "course.pdf"; // your PDF file
 
 let pdfDoc = null,
     currentPage = 1,
-    scale = 1.4,
+    scale = 1.5,
     doublePage = false;
 
 const flipbook = document.getElementById("flipbook");
@@ -16,91 +16,103 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
   render();
 });
 
-// Render a page
-function renderPage(num, sideBySide=false) {
-  pdfDoc.getPage(num).then(page => {
-    const viewport = page.getViewport({ scale });
-    const a4Ratio = 297/210;
-    const width = 600;
-    const height = width * a4Ratio;
+// Render single page with high resolution
+async function renderPage(num) {
+  const page = await pdfDoc.getPage(num);
+  const containerWidth = flipbook.clientWidth / (doublePage ? 2 : 1);
+  const viewport = page.getViewport({ scale: 1 });
+  const pageScale = containerWidth / viewport.width;
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = viewport.width * pageScale;
+  canvas.height = viewport.height * pageScale;
 
-    canvas.width = width;
-    canvas.height = height;
-
-    const renderContext = {
-      canvasContext: ctx,
-      viewport: page.getViewport({ scale: width/viewport.width })
-    };
-    page.render(renderContext);
-
-    flipbook.appendChild(canvas);
-  });
+  const renderContext = {
+    canvasContext: ctx,
+    viewport: page.getViewport({ scale: pageScale })
+  };
+  await page.render(renderContext).promise;
+  return canvas;
 }
 
-// Render Flipbook
-function render() {
+// Create page div
+function createPageDiv(canvas) {
+  const pageDiv = document.createElement("div");
+  pageDiv.className = "page";
+  pageDiv.appendChild(canvas);
+  return pageDiv;
+}
+
+// Animate page flip
+function flipPage(forward = true) {
+  const pages = flipbook.querySelectorAll(".page");
+  if(forward) pages[0]?.classList.add("flip-forward");
+  else pages[pages.length-1]?.classList.add("flip-back");
+  setTimeout(render, 400);
+}
+
+// Render flipbook
+async function render() {
   flipbook.innerHTML = "";
 
-  if(doublePage && currentPage>1) {
-    // Dual pages
-    renderPage(currentPage,true);
-    if(currentPage+1<=pdfDoc.numPages) renderPage(currentPage+1,true);
+  if(doublePage && currentPage > 1) {
+    const leftCanvas = await renderPage(currentPage);
+    const leftDiv = createPageDiv(leftCanvas);
+    flipbook.appendChild(leftDiv);
+
+    if(currentPage + 1 <= pdfDoc.numPages) {
+      const rightCanvas = await renderPage(currentPage+1);
+      const rightDiv = createPageDiv(rightCanvas);
+      flipbook.appendChild(rightDiv);
+    }
     flipbook.style.flexDirection = "row";
   } else {
-    // Single page
-    renderPage(currentPage,false);
+    const canvas = await renderPage(currentPage);
+    const pageDiv = createPageDiv(canvas);
+    flipbook.appendChild(pageDiv);
     flipbook.style.flexDirection = "column";
   }
 
   pageNum.textContent = `${currentPage} / ${pdfDoc.numPages}`;
 }
 
-// Buttons
-document.getElementById("prev").addEventListener("click", () => {
-  if(currentPage<=1) return;
+// Toolbar buttons
+document.getElementById("prev").addEventListener("click", ()=>{
+  if(currentPage <=1) return;
   currentPage = doublePage && currentPage>2 ? currentPage-2 : currentPage-1;
-  render();
+  flipPage(false);
 });
-
-document.getElementById("next").addEventListener("click", () => {
-  if(currentPage>=pdfDoc.numPages) return;
+document.getElementById("next").addEventListener("click", ()=>{
+  if(currentPage >= pdfDoc.numPages) return;
   currentPage = doublePage ? currentPage+2 : currentPage+1;
-  render();
+  flipPage(true);
 });
-
-document.getElementById("zoom").addEventListener("click", () => {
+document.getElementById("zoom").addEventListener("click", ()=>{
   scale += 0.2;
-  flipbook.style.transform = `scale(${scale/1.4})`;
+  flipbook.style.transform = `scale(${scale/1.5})`;
   setTimeout(render,400);
 });
-
-document.getElementById("fullscreen").addEventListener("click", () => {
+document.getElementById("fullscreen").addEventListener("click", ()=>{
   if(document.fullscreenElement) document.exitFullscreen();
   else document.documentElement.requestFullscreen();
 });
-
-document.getElementById("doublePage").addEventListener("change", (e)=>{
+document.getElementById("doublePage").addEventListener("change", e=>{
   doublePage = e.target.checked;
   render();
 });
 
 // Swipe support
 let touchStartX=0, touchEndX=0;
-flipbook.addEventListener("touchstart", e=> touchStartX = e.changedTouches[0].screenX);
+flipbook.addEventListener("touchstart", e=> touchStartX=e.changedTouches[0].screenX);
 flipbook.addEventListener("touchend", e=>{
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipe();
-});
-function handleSwipe(){
-  const distance = touchEndX-touchStartX;
+  touchEndX=e.changedTouches[0].screenX;
+  const distance = touchEndX - touchStartX;
   if(distance>50 && currentPage>1){
     currentPage = doublePage && currentPage>2 ? currentPage-2 : currentPage-1;
-    render();
+    flipPage(false);
   } else if(distance<-50 && currentPage<pdfDoc.numPages){
     currentPage = doublePage ? currentPage+2 : currentPage+1;
-    render();
+    flipPage(true);
   }
-}
+});
