@@ -1,15 +1,19 @@
 let pdfDoc = null,
     totalPages = 0,
     scale = 1.2,
-    soundOn = true,
-    pageFlip = null,
-    currentPageNum = 1;
+    soundOn = localStorage.getItem("soundOn") !== "false", // remember state
+    pageFlip = null;
 
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
 const flipbook = document.getElementById("flipbook");
 const loader = document.getElementById("loader");
 const loaderText = document.getElementById("loaderText");
+
+// ✅ Show loader at startup
+window.addEventListener("load", () => {
+  loader.classList.add("active");
+});
 
 // ✅ Load PDF
 pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
@@ -18,7 +22,7 @@ pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   renderPages();
 });
 
-// ✅ Render all pages into flipbook
+// ✅ Render all pages
 async function renderPages() {
   const pages = [];
   for (let i = 1; i <= totalPages; i++) {
@@ -35,9 +39,11 @@ async function renderPages() {
     loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
+  // Reset
   flipbook.innerHTML = "";
   if (pageFlip) pageFlip.destroy();
 
+  // ✅ Init PageFlip
   pageFlip = new St.PageFlip(flipbook, {
     width: 500,
     height: 700,
@@ -53,17 +59,47 @@ async function renderPages() {
   });
 
   pageFlip.loadFromHTML(pages);
-  updatePageInfo(1);
 
+  // ✅ Resume popup
+  let savedPage = parseInt(localStorage.getItem("lastPage")) || 1;
+  if (savedPage > 1) {
+    const resumePopup = document.getElementById("resumePopup");
+    const resumeText = document.getElementById("resumeText");
+    resumeText.textContent = `Continue where you left off? (Page ${savedPage})`;
+    resumePopup.classList.add("active");
+
+    document.getElementById("resumeYes").onclick = () => {
+      pageFlip.turnToPage(savedPage - 1);
+      updatePageInfo(savedPage);
+      closeResumePopup();
+    };
+    document.getElementById("resumeNo").onclick = () => {
+      localStorage.removeItem("lastPage");
+      pageFlip.turnToPage(0);
+      updatePageInfo(1);
+      closeResumePopup();
+    };
+  } else {
+    pageFlip.turnToPage(0);
+    updatePageInfo(1);
+  }
+
+  // ✅ On flip
   pageFlip.on("flip", (e) => {
-    currentPageNum = e.data + 1;
-    updatePageInfo(currentPageNum);
+    const currentPage = e.data + 1;
+    updatePageInfo(currentPage);
+    localStorage.setItem("lastPage", currentPage);
     if (soundOn) flipSound.play();
+    showNavbar();
   });
 
+  // ✅ Fade out loader once
   if (!loader.classList.contains("fade-out")) {
+    loader.classList.remove("active");
     loader.classList.add("fade-out");
-    setTimeout(() => { loader.style.display = "none"; }, 800);
+    setTimeout(() => {
+      loader.style.display = "none";
+    }, 800);
   }
 }
 
@@ -100,62 +136,33 @@ document.getElementById("fullscreen").addEventListener("click", () => {
   }
 });
 
-// ✅ Sound toggle
+// ✅ Sound toggle (remember state)
 document.getElementById("soundToggle").addEventListener("click", () => {
   soundOn = !soundOn;
+  localStorage.setItem("soundOn", soundOn);
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 });
+document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 
-// ✅ Go To Page
-function goToPage(pageNum) {
-  if (pageNum >= 1 && pageNum <= totalPages) {
-    const sheetIndex = (pageNum % 2 === 0) ? pageNum - 1 : pageNum - 2;
-    pageFlip.turnToPage(sheetIndex < 0 ? 0 : sheetIndex);
-    currentPageNum = pageNum;
-    updatePageInfo(currentPageNum);
-    document.getElementById("gotoPage").value = ""; // clear after jump
-  }
+// ✅ Navbar auto-hide
+let hideNavbarTimeout;
+function showNavbar() {
+  const navbar = document.querySelector(".navbar");
+  navbar.classList.remove("hidden");
+  clearTimeout(hideNavbarTimeout);
+  hideNavbarTimeout = setTimeout(() => {
+    navbar.classList.add("hidden");
+  }, 3000);
 }
-document.getElementById("gotoBtn").addEventListener("click", () => {
-  const pageNum = parseInt(document.getElementById("gotoPage").value, 10);
-  goToPage(pageNum);
-});
-document.getElementById("gotoPage").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    const pageNum = parseInt(e.target.value, 10);
-    goToPage(pageNum);
-  }
-});
+showNavbar();
+document.addEventListener("mousemove", showNavbar);
+document.addEventListener("keydown", showNavbar);
 
-// ✅ Keyboard shortcuts
-document.addEventListener("keydown", (e) => {
-  if (!pageFlip) return;
-
-  switch (e.key) {
-    case "ArrowLeft":
-      pageFlip.flipPrev();
-      break;
-    case "ArrowRight":
-      pageFlip.flipNext();
-      break;
-    case "ArrowUp":
-      goToPage(1);
-      break;
-    case "ArrowDown":
-      goToPage(totalPages);
-      break;
-    case "f":
-    case "F":
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        document.exitFullscreen();
-      }
-      break;
-    case "m":
-    case "M":
-      soundOn = !soundOn;
-      document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
-      break;
-  }
-});
+// ✅ Close resume popup helper
+function closeResumePopup() {
+  const resumePopup = document.getElementById("resumePopup");
+  resumePopup.classList.remove("active");
+  setTimeout(() => {
+    resumePopup.style.display = "none";
+  }, 400);
+}
