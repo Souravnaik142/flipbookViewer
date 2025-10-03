@@ -93,11 +93,12 @@
 
   <div id="flipbook" class="single"></div>
 
-  <!-- PDF.js -->
+  <!-- ✅ Load the official PDF.js -->
   <script src="pdf.js"></script>
-  <script src="pdf.worker.js"></script>
-
   <script>
+    // If you downloaded official build, worker file must be set explicitly
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.js";
+
     const url = "physics.pdf"; // put your PDF here
     let pdfDoc = null;
     let currentPage = 1;
@@ -125,17 +126,14 @@
 
     function renderFlipbook() {
       flipbook.innerHTML = "";
-
-      // check screen size
       doublePage = window.innerWidth > 900;
-
       flipbook.className = doublePage ? "double" : "single";
 
       if (doublePage) {
         let leftPage = currentPage;
-        if (leftPage % 2 === 1) leftPage--; // ensure even page on left
+        if (leftPage % 2 === 1) leftPage--; // ensure even on left
 
-        [leftPage, leftPage+1].forEach(p => {
+        [leftPage, leftPage + 1].forEach(p => {
           if (p >= 1 && p <= pdfDoc.numPages) {
             const div = document.createElement("div");
             div.className = "page";
