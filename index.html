@@ -3,192 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flipbook Viewer</title>
+  <title>Flipbook Test</title>
   <style>
-    body {
-      margin: 0;
-      background: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-    }
-
-    #toolbar {
-      background: #222;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-    }
-    #toolbar button {
-      background: #444;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      margin: 0 4px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    #toolbar button:hover {
-      background: #666;
-    }
-
-    #flipbook {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      background: #e2e2e2;
-      position: relative;
-    }
-
-    .page {
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      margin: 0 2px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-    .page canvas {
-      width: 100%;
-      height: 100%;
-    }
-
-    .double .page {
-      width: calc(50% - 4px);
-    }
-    .single .page {
-      width: 100%;
-    }
-
-    @media(max-width: 768px) {
-      #flipbook.double {
-        flex-direction: column;
-      }
-      #flipbook.double .page {
-        width: 100%;
-        margin: 4px 0;
-      }
-    }
+    body { margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#ddd; }
+    #the-canvas { border:1px solid #333; box-shadow:0 0 10px rgba(0,0,0,0.5); }
   </style>
 </head>
 <body>
-  <div id="toolbar">
-    <div>
-      <button id="prev">⬅ Prev</button>
-      <button id="next">Next ➡</button>
-    </div>
-    <div id="page-num">Page 1</div>
-    <div>
-      <button id="zoom-in">🔍 +</button>
-      <button id="zoom-out">🔍 -</button>
-      <button id="fullscreen">⛶</button>
-    </div>
-  </div>
+  <canvas id="the-canvas"></canvas>
 
-  <div id="flipbook" class="single"></div>
-
-  <!-- ✅ Load the official PDF.js -->
+  <!-- ✅ Include PDF.js -->
   <script src="pdf.js"></script>
   <script>
-    // If you downloaded official build, worker file must be set explicitly
     pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.js";
 
-    const url = "physics.pdf"; // put your PDF here
+    const url = "physics.pdf"; // keep physics.pdf in same folder
     let pdfDoc = null;
-    let currentPage = 1;
-    let scale = 1.5;
-    let doublePage = false;
-    const flipbook = document.getElementById("flipbook");
-    const pageNumEl = document.getElementById("page-num");
-    const flipSound = new Audio("page-flip.wav"); // or mp3
 
-    function renderPage(num, canvas) {
-      pdfDoc.getPage(num).then(page => {
-        const viewport = page.getViewport({ scale });
-        const context = canvas.getContext("2d");
-        const ratio = window.devicePixelRatio || 1;
-
-        canvas.width = viewport.width * ratio;
-        canvas.height = viewport.height * ratio;
-        canvas.style.width = viewport.width + "px";
-        canvas.style.height = viewport.height + "px";
-
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        page.render({ canvasContext: context, viewport: viewport });
-      });
-    }
-
-    function renderFlipbook() {
-      flipbook.innerHTML = "";
-      doublePage = window.innerWidth > 900;
-      flipbook.className = doublePage ? "double" : "single";
-
-      if (doublePage) {
-        let leftPage = currentPage;
-        if (leftPage % 2 === 1) leftPage--; // ensure even on left
-
-        [leftPage, leftPage + 1].forEach(p => {
-          if (p >= 1 && p <= pdfDoc.numPages) {
-            const div = document.createElement("div");
-            div.className = "page";
-            const canvas = document.createElement("canvas");
-            div.appendChild(canvas);
-            flipbook.appendChild(div);
-            renderPage(p, canvas);
-          }
-        });
-      } else {
-        const div = document.createElement("div");
-        div.className = "page";
-        const canvas = document.createElement("canvas");
-        div.appendChild(canvas);
-        flipbook.appendChild(div);
-        renderPage(currentPage, canvas);
-      }
-
-      pageNumEl.textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
-    }
-
-    function queueRender(num) {
-      if (num < 1 || num > pdfDoc.numPages) return;
-      currentPage = num;
-      renderFlipbook();
-      flipSound.play();
-    }
-
-    document.getElementById("prev").addEventListener("click", () => {
-      queueRender(currentPage - 1);
-    });
-    document.getElementById("next").addEventListener("click", () => {
-      queueRender(currentPage + 1);
-    });
-    document.getElementById("zoom-in").addEventListener("click", () => {
-      scale += 0.25;
-      renderFlipbook();
-    });
-    document.getElementById("zoom-out").addEventListener("click", () => {
-      scale = Math.max(0.5, scale - 0.25);
-      renderFlipbook();
-    });
-    document.getElementById("fullscreen").addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        document.exitFullscreen();
-      }
-    });
-
-    window.addEventListener("resize", renderFlipbook);
-
-    pdfjsLib.getDocument(url).promise.then(pdf => {
+    pdfjsLib.getDocument(url).promise.then(function(pdf) {
       pdfDoc = pdf;
-      renderFlipbook();
+      return pdf.getPage(1); // load first page
+    }).then(function(page) {
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.getElementById("the-canvas");
+      const context = canvas.getContext("2d");
+
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = { canvasContext: context, viewport: viewport };
+      page.render(renderContext);
+    }).catch(err => {
+      console.error("PDF loading error:", err);
     });
   </script>
 </body>
