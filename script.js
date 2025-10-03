@@ -9,33 +9,40 @@ const flipbook = document.getElementById("flipbook");
 const pageNumEl = document.getElementById("page-number");
 const loader = document.getElementById("loader");
 
-// Render a page into a canvas
+// Render a page into a canvas with A4 size
 function renderPage(num, container) {
   pdfDoc.getPage(num).then(page => {
+    // A4 ratio viewport
     const viewport = page.getViewport({ scale });
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
+    const a4Width = 595;  // A4 width in pt at 72dpi
+    const a4Height = 842; // A4 height in pt
     const ratio = window.devicePixelRatio || 1;
 
-    canvas.width = viewport.width * ratio;
-    canvas.height = viewport.height * ratio;
-    canvas.style.width = viewport.width + "px";
-    canvas.style.height = viewport.height + "px";
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    canvas.width = a4Width * ratio;
+    canvas.height = a4Height * ratio;
+    canvas.style.width = a4Width + "px";
+    canvas.style.height = a4Height + "px";
 
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    page.render({ canvasContext: context, viewport });
+    page.render({
+      canvasContext: context,
+      viewport: page.getViewport({ scale: a4Width / viewport.width })
+    });
 
     container.appendChild(canvas);
   });
 }
 
-// Render the flipbook (single or double view)
+// Render the flipbook
 function renderFlipbook() {
   flipbook.innerHTML = "";
 
   if (doublePage) {
     let leftPage = currentPage;
-    if (leftPage % 2 === 1) leftPage--; // align even page left
+    if (leftPage % 2 === 1) leftPage--;
 
     [leftPage, leftPage + 1].forEach(p => {
       if (p >= 1 && p <= pdfDoc.numPages) {
@@ -43,11 +50,7 @@ function renderFlipbook() {
         pageDiv.className = "page enter";
         renderPage(p, pageDiv);
         flipbook.appendChild(pageDiv);
-
-        // Animate smooth entrance
-        setTimeout(() => {
-          pageDiv.classList.add("show");
-        }, 50);
+        setTimeout(() => pageDiv.classList.add("show"), 50);
       }
     });
   } else {
@@ -55,10 +58,7 @@ function renderFlipbook() {
     pageDiv.className = "page enter";
     renderPage(currentPage, pageDiv);
     flipbook.appendChild(pageDiv);
-
-    setTimeout(() => {
-      pageDiv.classList.add("show");
-    }, 50);
+    setTimeout(() => pageDiv.classList.add("show"), 50);
   }
 
   pageNumEl.textContent = `${currentPage} / ${pdfDoc.numPages}`;
@@ -71,24 +71,18 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
   renderFlipbook();
 });
 
-// Buttons
+// Controls
 document.getElementById("prev").addEventListener("click", () => {
-  if (currentPage > 1) {
-    currentPage--;
-    renderFlipbook();
-  }
+  if (currentPage > 1) { currentPage--; renderFlipbook(); }
 });
 
 document.getElementById("next").addEventListener("click", () => {
-  if (currentPage < pdfDoc.numPages) {
-    currentPage++;
-    renderFlipbook();
-  }
+  if (currentPage < pdfDoc.numPages) { currentPage++; renderFlipbook(); }
 });
 
 document.getElementById("zoom").addEventListener("click", () => {
   scale += 0.25;
-  flipbook.style.transform = `scale(${scale / 1.5})`; // smooth zoom animation
+  flipbook.style.transform = `scale(${scale / 1.5})`;
   setTimeout(renderFlipbook, 400);
 });
 
@@ -105,27 +99,20 @@ document.getElementById("doublePage").addEventListener("change", (e) => {
   renderFlipbook();
 });
 
-// ✅ Swipe support for mobile
-let touchStartX = 0;
-let touchEndX = 0;
-
-flipbook.addEventListener("touchstart", (e) => {
-  touchStartX = e.changedTouches[0].screenX;
-});
-
-flipbook.addEventListener("touchend", (e) => {
+// Swipe for mobile
+let touchStartX = 0, touchEndX = 0;
+flipbook.addEventListener("touchstart", e => touchStartX = e.changedTouches[0].screenX);
+flipbook.addEventListener("touchend", e => {
   touchEndX = e.changedTouches[0].screenX;
   handleSwipe();
 });
 
 function handleSwipe() {
   const swipeDistance = touchEndX - touchStartX;
-  const minSwipe = 50;
-
-  if (swipeDistance > minSwipe && currentPage > 1) {
+  if (swipeDistance > 50 && currentPage > 1) {
     currentPage--;
     renderFlipbook();
-  } else if (swipeDistance < -minSwipe && currentPage < pdfDoc.numPages) {
+  } else if (swipeDistance < -50 && currentPage < pdfDoc.numPages) {
     currentPage++;
     renderFlipbook();
   }
