@@ -1,9 +1,11 @@
+/* ----- Config & DOM ----- */
 let pdfDoc = null,
     totalPages = 0,
     scale = 1.2,
     soundOn = true,
     pageFlip = null;
 
+const viewer = document.getElementById("viewerContainer");
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
 const flipbook = document.getElementById("flipbook");
@@ -12,18 +14,21 @@ const loaderText = document.getElementById("loaderText");
 const thumbnailStrip = document.getElementById("thumbnailStrip");
 const thumbToggle = document.getElementById("thumbToggle");
 
-// ✅ Body is focusable
-document.body.setAttribute("tabindex", "0");
-document.body.focus();
+/* make viewer focusable & grab focus initially */
+viewer.setAttribute("tabindex", "0");
+viewer.focus();
 
-// ✅ Load PDF
+/* ----- Load PDF ----- */
 pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   pdfDoc = pdf;
   totalPages = pdf.numPages;
   renderPages();
+}).catch(err => {
+  console.error("PDF load error:", err);
+  loaderText.textContent = "Failed to load PDF.";
 });
 
-// ✅ Render all pages
+/* ----- Render pages & thumbnails ----- */
 async function renderPages() {
   const pages = [];
   thumbnailStrip.innerHTML = "";
@@ -43,21 +48,14 @@ async function renderPages() {
     loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
+  // Initialize PageFlip
   flipbook.innerHTML = "";
   if (pageFlip) pageFlip.destroy();
 
   pageFlip = new St.PageFlip(flipbook, {
-    width: 500,
-    height: 700,
-    size: "stretch",
-    minWidth: 315,
-    maxWidth: 1200,
-    minHeight: 400,
-    maxHeight: 1600,
-    maxShadowOpacity: 0.5,
-    showCover: true,
-    useMouseEvents: true,
-    mobileScrollSupport: true,
+    width: 500, height: 700, size: "stretch",
+    minWidth: 315, maxWidth: 1200, minHeight: 400, maxHeight: 1600,
+    maxShadowOpacity: 0.5, showCover: true, useMouseEvents: true, mobileScrollSupport: true
   });
 
   pageFlip.loadFromHTML(pages);
@@ -66,46 +64,46 @@ async function renderPages() {
   pageFlip.on("flip", (e) => {
     updatePageInfo(e.data + 1);
     highlightThumbnail(e.data + 1);
-
     if (soundOn) {
       flipSound.currentTime = 0;
       flipSound.play();
     }
   });
 
+  // hide loader
   if (!loader.classList.contains("fade-out")) {
     loader.classList.add("fade-out");
-    setTimeout(() => loader.style.display = "none", 800);
+    setTimeout(() => loader.style.display = "none", 600);
   }
+
+  // ensure viewer has focus
+  restoreFocus();
 }
 
-// ✅ Render one page
 function renderPage(num, canvas) {
   return pdfDoc.getPage(num).then(page => {
-    const viewport = page.getViewport({ scale });
+    const viewport = page.getViewport({ scale: scale });
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-
-    return page.render({ canvasContext: ctx, viewport }).promise;
+    return page.render({ canvasContext: ctx, viewport: viewport }).promise;
   });
 }
 
-// ✅ Page info
+/* ----- UI helpers ----- */
 function updatePageInfo(pageNum) {
   pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
 
-// ✅ Thumbnails
 function createThumbnail(pageNum) {
-  pdfDoc.getPage(pageNum).then(page => {
+  pdfDoc.getPage(pageNum).then((page) => {
     const viewport = page.getViewport({ scale: 0.2 });
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+    page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
       const img = document.createElement("img");
       img.src = canvas.toDataURL();
       img.dataset.page = pageNum;
@@ -124,19 +122,17 @@ function createThumbnail(pageNum) {
 function highlightThumbnail(pageNum) {
   const thumbs = thumbnailStrip.querySelectorAll("img");
   thumbs.forEach(img => img.classList.remove("active"));
-
   const active = thumbnailStrip.querySelector(`img[data-page="${pageNum}"]`);
   if (active) {
     active.classList.add("active");
-
     const stripRect = thumbnailStrip.getBoundingClientRect();
     const activeRect = active.getBoundingClientRect();
     const offset = activeRect.left - stripRect.left - (stripRect.width / 2) + (activeRect.width / 2);
-    thumbnailStrip.scrollBy({ left: offset, behavior: "smooth" });
+    thumbnailStrip.scrollBy({ left: offset, behavior: 'smooth' });
   }
 }
 
-// ✅ Navigation buttons
+/* ----- Navigation buttons ----- */
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
   restoreFocus();
@@ -146,42 +142,50 @@ document.getElementById("nextPage").addEventListener("click", () => {
   restoreFocus();
 });
 
-// ✅ Fullscreen
+/* ----- Fullscreen: request fullscreen on the entire viewer container ----- */
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
-    flipbook.requestFullscreen().then(() => {
-      flipbook.setAttribute("tabindex", "0");
-      flipbook.focus();   // focus flipbook in fullscreen
+    // request fullscreen on the viewer so navbar + flipbook + thumbnails are included
+    viewer.requestFullscreen().then(() => {
+      // make viewer focusable and focus it
+      viewer.setAttribute("tabindex", "0");
+      viewer.focus();
+    }).catch(err => {
+      console.warn("Fullscreen request failed:", err);
     });
   } else {
     document.exitFullscreen().then(() => {
-      document.body.focus(); // restore body focus
+      document.body.focus();
+    }).catch(err => {
+      console.warn("Exit fullscreen failed:", err);
     });
   }
 }
 document.getElementById("fullscreen").addEventListener("click", toggleFullscreen);
 
-// ✅ Sound
+/* ----- Sound toggle ----- */
 function toggleSound() {
   soundOn = !soundOn;
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+  restoreFocus();
 }
 document.getElementById("soundToggle").addEventListener("click", toggleSound);
 
-// ✅ Thumbnail toggle
+/* ----- Thumbnails toggle ----- */
 thumbToggle.addEventListener("click", () => {
   thumbnailStrip.classList.toggle("hidden");
   thumbToggle.textContent = thumbnailStrip.classList.contains("hidden") ? "📕" : "📚";
   restoreFocus();
 });
 
-// ✅ Keyboard navigation (bind to document for fullscreen)
+/* ----- Keyboard handling ----- */
+/* Use document so it also fires reliably when viewer is fullscreen */
 document.addEventListener("keydown", (e) => {
   if (!pageFlip) return;
 
   switch (e.key) {
-    case "ArrowLeft": pageFlip.flipPrev(); break;
-    case "ArrowRight": pageFlip.flipNext(); break;
+    case "ArrowLeft": e.preventDefault(); pageFlip.flipPrev(); break;
+    case "ArrowRight": e.preventDefault(); pageFlip.flipNext(); break;
     case "+": case "=": scale += 0.2; renderPages(); break;
     case "-": if (scale > 0.6) { scale -= 0.2; renderPages(); } break;
     case "f": case "F": toggleFullscreen(); break;
@@ -190,22 +194,45 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// ✅ Ensure focus after UI clicks
+/* Prevent the thumbnail strip from consuming arrow keys (scrolling) */
+thumbnailStrip.addEventListener("keydown", (e) => {
+  if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault();
+  }
+});
+
+/* ----- Focus utilities ----- */
 function restoreFocus() {
   setTimeout(() => {
-    if (document.fullscreenElement) {
-      flipbook.focus();
+    // If we're fullscreen, focus the viewer container (so keys work)
+    if (document.fullscreenElement === viewer) {
+      viewer.focus();
     } else {
+      // otherwise focus body, or viewer - both work
       document.body.focus();
     }
-  }, 50);
+  }, 40);
 }
 
+/* Ensure clicks inside viewer focus it (useful for pointer events) */
+viewer.addEventListener("pointerdown", () => viewer.focus());
+
+/* After any UI control click, re-focus appropriately */
 document.querySelectorAll("button, #thumbnailStrip img").forEach(el => {
   el.addEventListener("click", restoreFocus);
 });
 
-// ✅ Resize
+/* Handle fullscreen change events to keep proper focus */
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement === viewer) {
+    viewer.setAttribute("tabindex", "0");
+    viewer.focus();
+  } else {
+    document.body.focus();
+  }
+});
+
+/* ----- Resize handling ----- */
 window.addEventListener("resize", () => {
   if (pageFlip) pageFlip.updateFromHtml();
 });
