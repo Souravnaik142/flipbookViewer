@@ -1,4 +1,4 @@
-const url = "physics.pdf"; // keep PDF in same folder
+const url = "physics.pdf"; // PDF file
 
 let pdfDoc = null;
 let currentPage = 1;
@@ -35,21 +35,30 @@ function renderFlipbook() {
 
   if (doublePage) {
     let leftPage = currentPage;
-    if (leftPage % 2 === 1) leftPage--; // even page left
+    if (leftPage % 2 === 1) leftPage--; // align even page left
 
     [leftPage, leftPage + 1].forEach(p => {
       if (p >= 1 && p <= pdfDoc.numPages) {
         const pageDiv = document.createElement("div");
-        pageDiv.className = "page";
+        pageDiv.className = "page enter";
         renderPage(p, pageDiv);
         flipbook.appendChild(pageDiv);
+
+        // Animate smooth entrance
+        setTimeout(() => {
+          pageDiv.classList.add("show");
+        }, 50);
       }
     });
   } else {
     const pageDiv = document.createElement("div");
-    pageDiv.className = "page";
+    pageDiv.className = "page enter";
     renderPage(currentPage, pageDiv);
     flipbook.appendChild(pageDiv);
+
+    setTimeout(() => {
+      pageDiv.classList.add("show");
+    }, 50);
   }
 
   pageNumEl.textContent = `${currentPage} / ${pdfDoc.numPages}`;
@@ -79,7 +88,8 @@ document.getElementById("next").addEventListener("click", () => {
 
 document.getElementById("zoom").addEventListener("click", () => {
   scale += 0.25;
-  renderFlipbook();
+  flipbook.style.transform = `scale(${scale / 1.5})`; // smooth zoom animation
+  setTimeout(renderFlipbook, 400);
 });
 
 document.getElementById("fullscreen").addEventListener("click", () => {
@@ -110,7 +120,7 @@ flipbook.addEventListener("touchend", (e) => {
 
 function handleSwipe() {
   const swipeDistance = touchEndX - touchStartX;
-  const minSwipe = 50; // px threshold
+  const minSwipe = 50;
 
   if (swipeDistance > minSwipe && currentPage > 1) {
     currentPage--;
