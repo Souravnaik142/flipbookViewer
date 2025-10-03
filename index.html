@@ -26,16 +26,17 @@
     <button id="prevPage">⬅ Prev</button>
     <span id="pageInfo"></span>
     <button id="nextPage">Next ➡</button>
+    <input type="number" id="gotoPage" placeholder="Go to page" />
+    <button id="gotoBtn">Go</button>
     <button id="fullscreen">⛶</button>
     <button id="soundToggle">🔊</button>
-    
-    <!-- Go to page -->
-    <input type="number" id="gotoPage" placeholder="Page #" min="1" />
-    <button id="gotoBtn">Go</button>
   </nav>
 
   <!-- Flipbook container -->
   <div id="flipbook" class="flipbook"></div>
+
+  <!-- Background loader -->
+  <div id="bgLoader">Loading more pages...</div>
 
   <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
