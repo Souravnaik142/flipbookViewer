@@ -1,259 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Flipbook Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css" />
 
   <!-- PDF.js -->
-  <script src="pdf.js"></script>
-  <script src="pdf.worker.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
 
-  <!-- StPageFlip CSS + JS -->
+  <!-- StPageFlip -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css" />
   <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
-
-  <!-- Styles -->
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #2d2d2d;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-    h2 {
-      margin-top: 10px;
-    }
-    #flipbook {
-      width: 100%;
-      max-width: 1000px;
-      height: 700px;
-      margin-top: 20px;
-    }
-    .controls {
-      margin: 10px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background: #444;
-      color: white;
-      font-size: 16px;
-    }
-    button:hover {
-      background: #666;
-    }
-    #pageInfo {
-      min-width: 60px;
-      text-align: center;
-    }
-    canvas.pdf-page {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    /* Loader Overlay */
-    .loader-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.9);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 9999;
-      opacity: 1;
-      transition: opacity 0.8s ease; /* smooth fade */
-    }
-    .loader-overlay.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-    .loader-content {
-      text-align: center;
-    }
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 6px solid #444;
-      border-top: 6px solid #00ffcc;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
-    }
-    #loaderText {
-      font-size: 18px;
-      margin-top: 10px;
-    }
-  </style>
 </head>
 <body>
-  <h2>📖 Flipbook Viewer</h2>
-
   <!-- Loader -->
   <div id="loader" class="loader-overlay">
     <div class="loader-content">
       <div class="spinner"></div>
-      <p id="loaderText">Loading your book...</p>
+      <div id="loaderText">Loading your book...</div>
     </div>
   </div>
 
-  <!-- Flipbook container -->
-  <div id="flipbook"></div>
-
-  <!-- Controls -->
-  <div class="controls">
+  <!-- Navigation bar -->
+  <nav class="navbar">
     <button id="prevPage">⬅ Prev</button>
-    <span id="pageInfo">0 / 0</span>
+    <span id="pageInfo"></span>
     <button id="nextPage">Next ➡</button>
     <button id="zoomIn">➕</button>
     <button id="zoomOut">➖</button>
     <button id="fullscreen">⛶</button>
     <button id="soundToggle">🔊</button>
-  </div>
+  </nav>
+
+  <!-- Flipbook container -->
+  <div id="flipbook" class="flipbook"></div>
 
   <!-- Flip Sound -->
   <audio id="flipSound" src="page-flip.wav"></audio>
 
-  <!-- Script -->
-  <script>
-    let pdfDoc = null,
-        totalPages = 0,
-        scale = 1.2,
-        soundOn = true,
-        pageFlip;
-
-    const pageInfo = document.getElementById("pageInfo");
-    const flipSound = document.getElementById("flipSound");
-    const flipbook = document.getElementById("flipbook");
-    const loader = document.getElementById("loader");
-    const loaderText = document.getElementById("loaderText");
-
-    // Load PDF
-    pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
-      pdfDoc = pdf;
-      totalPages = pdf.numPages;
-      renderPages();
-    });
-
-    // Render all PDF pages
-    async function renderPages() {
-      const pages = [];
-      for (let i = 1; i <= totalPages; i++) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "page";
-
-        const canvas = document.createElement("canvas");
-        canvas.className = "pdf-page";
-        wrapper.appendChild(canvas);
-
-        await renderPage(i, canvas);
-        pages.push(wrapper);
-
-        // ✅ Update loader progress
-        loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
-      }
-
-      // Reset container
-      flipbook.innerHTML = "";
-
-      // Init PageFlip
-      pageFlip = new St.PageFlip(flipbook, {
-        width: 500,
-        height: 700,
-        size: "stretch",
-        minWidth: 315,
-        maxWidth: 1200,
-        minHeight: 400,
-        maxHeight: 1600,
-        maxShadowOpacity: 0.5,
-        showCover: true,   // first page acts as cover
-        useMouseEvents: true,
-        mobileScrollSupport: true,
-      });
-
-      pageFlip.loadFromHTML(pages);
-      updatePageInfo(1);
-
-      // Flip event
-      pageFlip.on("flip", (e) => {
-        updatePageInfo(e.data + 1);
-        if (soundOn) flipSound.play();
-      });
-
-      // ✅ Fade out loader
-      loader.classList.add("fade-out");
-      setTimeout(() => {
-        loader.style.display = "none";
-      }, 800);
-    }
-
-    // Render single PDF page
-    function renderPage(num, canvas) {
-      return pdfDoc.getPage(num).then(page => {
-        const viewport = page.getViewport({ scale: scale });
-        const ctx = canvas.getContext("2d");
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        return page.render({ canvasContext: ctx, viewport: viewport }).promise;
-      });
-    }
-
-    // Update page counter
-    function updatePageInfo(pageNum) {
-      pageInfo.textContent = `${pageNum} / ${totalPages}`;
-    }
-
-    // Navigation
-    document.getElementById("prevPage").addEventListener("click", () => {
-      if (pageFlip) pageFlip.flipPrev();
-    });
-    document.getElementById("nextPage").addEventListener("click", () => {
-      if (pageFlip) pageFlip.flipNext();
-    });
-
-    // Zoom
-    document.getElementById("zoomIn").addEventListener("click", () => {
-      scale += 0.2;
-      renderPages();
-    });
-    document.getElementById("zoomOut").addEventListener("click", () => {
-      if (scale > 0.6) {
-        scale -= 0.2;
-        renderPages();
-      }
-    });
-
-    // Fullscreen
-    document.getElementById("fullscreen").addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        document.exitFullscreen();
-      }
-    });
-
-    // Sound toggle
-    document.getElementById("soundToggle").addEventListener("click", () => {
-      soundOn = !soundOn;
-      document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
