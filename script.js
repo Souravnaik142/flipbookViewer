@@ -2,16 +2,13 @@ let pdfDoc = null,
     totalPages = 0,
     scale = 1.2,
     soundOn = true,
-    pageFlip = null;
+    pageFlip = null; // global
 
 const pageInfo = document.getElementById("pageInfo");
 const flipSound = document.getElementById("flipSound");
 const flipbook = document.getElementById("flipbook");
 const loader = document.getElementById("loader");
 const loaderText = document.getElementById("loaderText");
-const thumbnailStrip = document.getElementById("thumbnailStrip");
-const thumbToggle = document.getElementById("thumbToggle");
-const viewer = document.querySelector(".viewer-container");
 
 // ✅ Load PDF
 pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
@@ -20,11 +17,9 @@ pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
   renderPages();
 });
 
-// ✅ Render all pages
+// ✅ Render all pages into flipbook
 async function renderPages() {
   const pages = [];
-  thumbnailStrip.innerHTML = "";
-
   for (let i = 1; i <= totalPages; i++) {
     const wrapper = document.createElement("div");
     wrapper.className = "page";
@@ -36,22 +31,18 @@ async function renderPages() {
     await renderPage(i, canvas);
     pages.push(wrapper);
 
-    // ✅ Add thumbnail
-    const thumb = document.createElement("img");
-    thumb.src = canvas.toDataURL("image/png");
-    thumb.dataset.page = i;
-    thumb.addEventListener("click", () => {
-      if (pageFlip) pageFlip.flip(i - 1);
-      restoreFocus();
-    });
-    thumbnailStrip.appendChild(thumb);
-
     loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
+  // Reset container
   flipbook.innerHTML = "";
-  if (pageFlip) pageFlip.destroy();
 
+  // Destroy previous instance if exists
+  if (pageFlip) {
+    pageFlip.destroy();
+  }
+
+  // ✅ Init PageFlip
   pageFlip = new St.PageFlip(flipbook, {
     width: 500,
     height: 700,
@@ -74,45 +65,56 @@ async function renderPages() {
     if (soundOn) flipSound.play();
   });
 
+  // Fade out loader (only once)
   if (!loader.classList.contains("fade-out")) {
     loader.classList.add("fade-out");
-    setTimeout(() => { loader.style.display = "none"; }, 800);
+    setTimeout(() => {
+      loader.style.display = "none";
+    }, 800);
   }
 }
 
-// ✅ Render one page
+// ✅ Render single page
 function renderPage(num, canvas) {
   return pdfDoc.getPage(num).then(page => {
-    const viewport = page.getViewport({ scale });
+    const viewport = page.getViewport({ scale: scale });
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-    return page.render({ canvasContext: ctx, viewport }).promise;
+
+    return page.render({ canvasContext: ctx, viewport: viewport }).promise;
   });
 }
 
-// ✅ Page info
+// ✅ Update page info
 function updatePageInfo(pageNum) {
   pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
 
-// ✅ Nav buttons
+// ✅ Navigation
 document.getElementById("prevPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipPrev();
-  restoreFocus();
 });
 document.getElementById("nextPage").addEventListener("click", () => {
   if (pageFlip) pageFlip.flipNext();
-  restoreFocus();
 });
 
-// ✅ Fullscreen toggle
+// ✅ Zoom
+document.getElementById("zoomIn").addEventListener("click", () => {
+  scale += 0.2;
+  renderPages();
+});
+document.getElementById("zoomOut").addEventListener("click", () => {
+  if (scale > 0.6) {
+    scale -= 0.2;
+    renderPages();
+  }
+});
+
+// ✅ Fullscreen
 document.getElementById("fullscreen").addEventListener("click", () => {
   if (!document.fullscreenElement) {
-    flipbook.requestFullscreen().then(() => {
-      flipbook.setAttribute("tabindex", "0");
-      flipbook.focus();
-    });
+    document.documentElement.requestFullscreen();
   } else {
     document.exitFullscreen();
   }
@@ -124,43 +126,4 @@ document.getElementById("soundToggle").addEventListener("click", () => {
   document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
 });
 
-// ✅ Keyboard navigation
-document.addEventListener("keydown", (e) => {
-  if (!pageFlip) return;
-  if (e.key === "ArrowLeft") pageFlip.flipPrev();
-  if (e.key === "ArrowRight") pageFlip.flipNext();
-});
 
-// ✅ Thumbnail toggle
-thumbToggle.addEventListener("click", () => {
-  const isHidden = thumbnailStrip.classList.toggle("hidden");
-  thumbToggle.textContent = isHidden ? "📕" : "📚";
-
-  if (isHidden) {
-    viewer.classList.remove("show-thumbs");
-  } else {
-    viewer.classList.add("show-thumbs");
-  }
-
-  setTimeout(() => {
-    if (pageFlip) pageFlip.updateFromHtml();
-  }, 300);
-
-  restoreFocus();
-});
-
-// ✅ Resize handler
-window.addEventListener("resize", () => {
-  if (pageFlip) pageFlip.updateFromHtml();
-});
-
-// ✅ Restore focus helper
-function restoreFocus() {
-  setTimeout(() => {
-    if (document.fullscreenElement) {
-      flipbook.focus();
-    } else {
-      document.body.focus();
-    }
-  }, 50);
-}
