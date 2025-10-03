@@ -1,4 +1,4 @@
-const url = "course.pdf"; // your PDF file
+const url = "yourcourse.pdf"; // your PDF file
 
 let pdfDoc = null,
     currentPage = 1,
