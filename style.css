@@ -41,52 +41,67 @@ h2 {
 .container {
   display: flex;
   justify-content: center;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 .flipbook-container {
-  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: #fff0f5;
   padding: 12px;
   box-shadow: 0 0 20px rgba(0,0,0,0.3);
   border-radius: 16px;
   overflow: hidden;
   max-width: 95vw;
+  min-height: 80vh;
+  margin: auto;
 }
 
 .flipbook {
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 0.4s ease;
-  gap: 6px;
+  gap: 12px;
 }
 
 .page {
-  border: 12px solid #ff7fff;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  border: 2px solid #ff7fff;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.4s ease, opacity 0.3s ease;
   background: #fff;
-  aspect-ratio: 1 / 1.414;
+  aspect-ratio: 1 / 1.414; /* A4 ratio */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.page.enter {
-  opacity: 0;
-  transform: translateY(40px) rotateX(15deg);
-}
-.page.show {
-  opacity: 1;
-  transform: translateY(0) rotateX(0deg);
+.page canvas {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  border-radius: 8px;
 }
 
-.page canvas {
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 8px;
+.page.flip-forward {
+  animation: flipForward 0.4s ease forwards;
+}
+
+.page.flip-back {
+  animation: flipBack 0.4s ease forwards;
+}
+
+@keyframes flipForward {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(-180deg); opacity: 0; }
+}
+
+@keyframes flipBack {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); opacity: 0; }
 }
 
 #page-number {
