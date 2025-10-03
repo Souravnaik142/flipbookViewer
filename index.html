@@ -86,26 +86,12 @@
     let pdfDoc = null,
         totalPages = 0,
         scale = 1.2,
-        soundOn = true;
+        soundOn = true,
+        pageFlip; // keep global reference
 
     const pageInfo = document.getElementById("pageInfo");
     const flipSound = document.getElementById("flipSound");
     const flipbook = document.getElementById("flipbook");
-
-    // Init StPageFlip
-    const pageFlip = new St.PageFlip(flipbook, {
-      width: 500,   // single page width
-      height: 700,  // single page height
-      size: "stretch",
-      minWidth: 315,
-      maxWidth: 1200,
-      minHeight: 400,
-      maxHeight: 1600,
-      maxShadowOpacity: 0.5,
-      showCover: true,   // first page is like a cover
-      useMouseEvents: true,
-      mobileScrollSupport: true,
-    });
 
     // Load PDF
     pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
@@ -128,8 +114,33 @@
         await renderPage(i, canvas);
         pages.push(wrapper);
       }
+
+      // Reset container
+      flipbook.innerHTML = "";
+
+      // Init or reload PageFlip
+      pageFlip = new St.PageFlip(flipbook, {
+        width: 500,
+        height: 700,
+        size: "stretch",
+        minWidth: 315,
+        maxWidth: 1200,
+        minHeight: 400,
+        maxHeight: 1600,
+        maxShadowOpacity: 0.5,
+        showCover: true,   // first page acts as cover
+        useMouseEvents: true,
+        mobileScrollSupport: true,
+      });
+
       pageFlip.loadFromHTML(pages);
       updatePageInfo(1);
+
+      // Flip event
+      pageFlip.on("flip", (e) => {
+        updatePageInfo(e.data + 1);
+        if (soundOn) flipSound.play();
+      });
     }
 
     // Render single PDF page
@@ -149,25 +160,23 @@
       pageInfo.textContent = `${pageNum} / ${totalPages}`;
     }
 
-    // Flip events
-    pageFlip.on("flip", (e) => {
-      updatePageInfo(e.data + 1);
-      if (soundOn) flipSound.play();
-    });
-
     // Navigation
-    document.getElementById("prevPage").addEventListener("click", () => pageFlip.flipPrev());
-    document.getElementById("nextPage").addEventListener("click", () => pageFlip.flipNext());
+    document.getElementById("prevPage").addEventListener("click", () => {
+      if (pageFlip) pageFlip.flipPrev();
+    });
+    document.getElementById("nextPage").addEventListener("click", () => {
+      if (pageFlip) pageFlip.flipNext();
+    });
 
     // Zoom
     document.getElementById("zoomIn").addEventListener("click", () => {
       scale += 0.2;
-      rerender();
+      renderPages();
     });
     document.getElementById("zoomOut").addEventListener("click", () => {
       if (scale > 0.6) {
         scale -= 0.2;
-        rerender();
+        renderPages();
       }
     });
 
@@ -185,13 +194,6 @@
       soundOn = !soundOn;
       document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
     });
-
-    // Re-render PDF after zoom
-    function rerender() {
-      flipbook.innerHTML = "";
-      pageFlip.clear();
-      renderPages();
-    }
   </script>
 </body>
 </html>
