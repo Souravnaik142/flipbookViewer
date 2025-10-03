@@ -1,108 +1,134 @@
-// PDF.js setup
+const url = 'yourcourse.pdf'; // PDF file in main folder
+let pdfDoc = null;
+let currentPage = 0;
+const flipbook = document.getElementById('flipbook');
+const thumbnailsContainer = document.getElementById('thumbnails');
+const loader = document.getElementById('loader');
+const pageNumber = document.getElementById('page-number');
+let doublePage = false;
+const flipSound = new Audio('page-flip.wav'); // optional WAV sound
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
 
-const url = 'yourcourse.pdf';  // PDF file
-let pdfDoc = null;
-let scale = 1.5;  // Default zoom
-const flipSound = document.getElementById("flipSound");
-
 // Load PDF
-pdfjsLib.getDocument(url).promise.then(function(pdf) {
+pdfjsLib.getDocument(url).promise.then(pdf => {
   pdfDoc = pdf;
-  document.getElementById("pageIndicator").textContent = `Page 1 / ${pdfDoc.numPages}`;
-  loadPages();
-});
+  loader.style.display = 'none';
 
-function loadPages() {
-  const flipbook = document.getElementById('flipbook');
-
-  for (let i = 1; i <= pdfDoc.numPages; i++) {
+  for (let i = 0; i < pdf.numPages; i++) {
     const pageDiv = document.createElement('div');
-    const canvas = document.createElement('canvas');
-    canvas.id = 'page' + i;
-    pageDiv.appendChild(canvas);
+    pageDiv.classList.add('page');
+    pageDiv.style.zIndex = pdf.numPages - i;
     flipbook.appendChild(pageDiv);
 
-    renderPage(i, canvas);
-  }
+    pdf.getPage(i + 1).then(page => {
+      const canvas = document.createElement('canvas');
+      pageDiv.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
 
-  // Hide loader when pages ready
-  document.getElementById("loadingOverlay").style.display = "none";
+      const viewport = page.getViewport({ scale:1 });
 
-  // Initialize Turn.js
-  $('#flipbook').turn({
-    width: 1000,
-    height: 650,
-    autoCenter: true,
-    display: 'double',
-    gradients: true,
-    acceleration: true,
-    when: {
-      turning: function(event, page) {
-        flipSound.currentTime = 0;
-        flipSound.play();
-        updatePageIndicator(page);
-      }
-    }
-  });
-
-  // Navigation
-  $("#prev").click(() => $("#flipbook").turn("previous"));
-  $("#next").click(() => $("#flipbook").turn("next"));
-
-  // Zoom
-  $("#zoomIn").click(() => zoomBook(1.2));
-  $("#zoomOut").click(() => zoomBook(0.8));
-
-  // Fullscreen
-  $("#fullscreen").click(() => toggleFullscreen());
-
-  // Page Jump
-  $("#jumpBtn").click(() => {
-    const pageNum = parseInt($("#pageJump").val());
-    if (pageNum >= 1 && pageNum <= pdfDoc.numPages) {
-      $("#flipbook").turn("page", pageNum);
-    }
-  });
-}
-
-function renderPage(num, canvas) {
-  pdfDoc.getPage(num).then(function(page) {
-    const viewport = page.getViewport({ scale: scale });
-    const context = canvas.getContext('2d');
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    page.render({
-      canvasContext: context,
-      viewport: viewport
+      // Initial render
+      renderPageCanvas(page, canvas, viewport);
+      
+      // Thumbnails
+      const thumbCanvas = document.createElement('canvas');
+      const thumbCtx = thumbCanvas.getContext('2d');
+      const thumbScale = 100 / viewport.width;
+      thumbCanvas.width = viewport.width * thumbScale;
+      thumbCanvas.height = viewport.height * thumbScale;
+      page.render({ canvasContext: thumbCtx, viewport: page.getViewport({ scale: thumbScale }) });
+      thumbCanvas.classList.add('thumbnail');
+      if(i===0) thumbCanvas.classList.add('active');
+      thumbnailsContainer.appendChild(thumbCanvas);
+      thumbCanvas.addEventListener('click', ()=>goToPage(i));
     });
-  });
-}
-
-// Update Page Indicator
-function updatePageIndicator(currentPage) {
-  document.getElementById("pageIndicator").textContent =
-    `Page ${currentPage} / ${pdfDoc.numPages}`;
-}
-
-// Zoom function
-function zoomBook(factor) {
-  scale *= factor;
-  for (let i = 1; i <= pdfDoc.numPages; i++) {
-    const canvas = document.getElementById('page' + i);
-    renderPage(i, canvas);
   }
-}
+  updatePageNumber();
+  window.addEventListener('resize', ()=>updatePageSizes());
+});
 
-// Fullscreen toggle
-function toggleFullscreen() {
-  const elem = document.documentElement;
-  if (!document.fullscreenElement) {
-    elem.requestFullscreen().catch(err => {
-      alert(`Error attempting fullscreen: ${err.message}`);
-    });
+// Render PDF page into canvas
+function renderPageCanvas(pdfPage, canvas, viewport){
+  const flipbookWidth = flipbook.clientWidth;
+  const flipbookHeight = flipbook.clientHeight;
+  let scale;
+  if(doublePage){
+    scale = Math.min((flipbookWidth/2)/viewport.width, flipbookHeight/viewport.height)*2;
   } else {
-    document.exitFullscreen();
+    scale = Math.min(flipbookWidth/viewport.width, flipbookHeight/viewport.height)*2;
   }
+
+  const scaledViewport = pdfPage.getViewport({ scale });
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = scaledViewport.width * ratio;
+  canvas.height = scaledViewport.height * ratio;
+  canvas.getContext('2d').setTransform(ratio, 0, 0, ratio, 0, 0);
+  pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport: scaledViewport });
 }
+
+// Update all page sizes (responsive)
+function updatePageSizes(){
+  const allPages = document.querySelectorAll('.page');
+  allPages.forEach((page, i)=>{
+    const canvas = page.querySelector('canvas');
+    if(!canvas) return;
+    pdfDoc.getPage(i+1).then(pdfPage=>{
+      renderPageCanvas(pdfPage, canvas, pdfPage.getViewport({ scale:1 }));
+    });
+  });
+}
+
+// Controls
+const pages = ()=>document.querySelectorAll('.page');
+document.getElementById('next').addEventListener('click', ()=>goToPage(currentPage+1));
+document.getElementById('prev').addEventListener('click', ()=>goToPage(currentPage-1));
+document.getElementById('zoom').addEventListener('click', ()=>flipbook.classList.toggle('zoomed'));
+document.getElementById('fullscreen').addEventListener('click', ()=>{
+  if(flipbook.requestFullscreen) flipbook.requestFullscreen();
+  else if(flipbook.webkitRequestFullscreen) flipbook.webkitRequestFullscreen();
+});
+document.getElementById('doublePage').addEventListener('change', e=>{
+  doublePage = e.target.checked;
+  flipbook.classList.toggle('double', doublePage);
+  updatePageSizes();
+  goToPage(currentPage);
+});
+
+// Navigate pages
+function goToPage(pageIndex){
+  const allPages = pages();
+  if(pageIndex<0 || pageIndex>=allPages.length) return;
+  flipSound.play();
+
+  allPages.forEach((p,i)=>{
+    let flip = i < pageIndex;
+    // First page always on right in double mode
+    if(doublePage && i === 0) flip = false;
+    p.classList.toggle('flipped', flip);
+  });
+
+  currentPage = pageIndex;
+  document.querySelectorAll('.thumbnail').forEach((thumb,i)=>thumb.classList.toggle('active', i===pageIndex));
+  updatePageNumber();
+}
+
+function updatePageNumber(){
+  if(!pdfDoc) return;
+  pageNumber.textContent = `${currentPage+1} / ${pdfDoc.numPages}`;
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight') goToPage(currentPage+1);
+  if(e.key==='ArrowLeft') goToPage(currentPage-1);
+});
+
+// Swipe navigation for mobile
+let startX=0;
+flipbook.addEventListener('touchstart', e=>startX=e.touches[0].clientX);
+flipbook.addEventListener('touchend', e=>{
+  const endX=e.changedTouches[0].clientX;
+  if(endX-startX>50) goToPage(currentPage-1);
+  if(startX-endX>50) goToPage(currentPage+1);
+});
