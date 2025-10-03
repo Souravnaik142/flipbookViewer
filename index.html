@@ -1,39 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smooth A4 Flipbook</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fun Flipbook</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-  <h2>My Course Flipbook</h2>
+<h2>📚 Fun Course Flipbook!</h2>
 
-  <div id="loader" class="loader">Loading...</div>
+<div id="loader" class="loader">Loading...</div>
 
-  <div class="toolbar">
-    <button id="prev" title="Previous Page">◀</button>
-    <button id="next" title="Next Page">▶</button>
-    <button id="zoom" title="Zoom">🔍</button>
-    <button id="fullscreen" title="Fullscreen">⛶</button>
-    <label title="Double Page View"><input type="checkbox" id="doublePage"> 📖</label>
+<div class="toolbar">
+  <button id="prev" title="Previous Page">◀</button>
+  <button id="next" title="Next Page">▶</button>
+  <button id="zoom" title="Zoom">🔍</button>
+  <button id="fullscreen" title="Fullscreen">⛶</button>
+  <label>
+    <input type="checkbox" id="doublePage"> 📖
+  </label>
+</div>
+
+<div class="container">
+  <div class="flipbook-container">
+    <div class="flipbook" id="flipbook"></div>
   </div>
+</div>
 
-  <div class="container">
-    <div class="flipbook-container">
-      <div class="flipbook" id="flipbook"></div>
-    </div>
-  </div>
+<div id="page-number">0 / 0</div>
 
-  <div id="page-number">0 / 0</div>
+<!-- PDF.js -->
+<script src="pdf.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.js";
+</script>
 
-  <!-- PDF.js -->
-  <script src="pdf.js"></script>
-  <script src="pdf.worker.js"></script>
-
-  <!-- Flipbook logic -->
-  <script src="script.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
