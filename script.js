@@ -2,7 +2,6 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js";
 
-
 // 🔹 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBzEhgiJXph4CbXBBwxcNU3MjDCHc0rWZo",
@@ -37,7 +36,7 @@ let pdfDoc = null,
     scale = 1.2,
     soundOn = true,
     pageFlip = null,
-    userPaid = false;
+    maxPagesAllowed = 10; // default free limit
 
 // ✅ Auth Handlers
 loginBtn.addEventListener("click", () => {
@@ -60,15 +59,32 @@ auth.onAuthStateChanged(user => {
     welcomeUser.textContent = `Welcome, ${username}`;
     logoutBtn.style.display = "inline-block";
 
-    // Check paid status from users.json
+    // ✅ Check paid/free from users.json
     fetch("users.json")
       .then(res => res.json())
       .then(users => {
-        let record = users.find(u => u.email === user.email);
-        userPaid = record && record.paid ? true : false;
+        let userData;
+
+        if (Array.isArray(users)) {
+          // Case 1: users.json is an array
+          userData = users.find(u => u.email === user.email);
+        } else {
+          // Case 2: users.json is an object
+          userData = users[user.email];
+        }
+
+        if (userData && userData.paid) {
+          maxPagesAllowed = Infinity; // unlock all pages
+        } else {
+          maxPagesAllowed = 10; // only first 10
+        }
+
         loadPDF();
       })
-      .catch(err => console.error("Error loading users.json", err));
+      .catch(err => {
+        console.error("Error loading users.json:", err);
+        loadPDF(); // fallback
+      });
 
   } else {
     loginOverlay.style.display = "flex";
@@ -79,8 +95,6 @@ auth.onAuthStateChanged(user => {
 
 // ✅ Load PDF
 function loadPDF() {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.js";
-
   pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
     pdfDoc = pdf;
     totalPages = pdf.numPages;
@@ -91,7 +105,7 @@ function loadPDF() {
 // ✅ Render all pages
 async function renderPages() {
   const pages = [];
-  let limit = userPaid ? totalPages : Math.min(10, totalPages);
+  const limit = Math.min(totalPages, maxPagesAllowed);
 
   for (let i = 1; i <= limit; i++) {
     const wrapper = document.createElement("div");
@@ -107,25 +121,16 @@ async function renderPages() {
     loaderText.textContent = `Loading page ${i} of ${limit}...`;
   }
 
-  // If unpaid, append the lock page
-  if (!userPaid && totalPages > 10) {
-    const lockWrapper = document.createElement("div");
-    lockWrapper.className = "page";
-    lockWrapper.innerHTML = `
-      <div class="locked-screen">
-        <div class="locked-content">
-          <img src="children-future.png" alt="Children towards future" class="future-img">
-          <h1>Your Path to Future Success 🚀</h1>
-          <p>Knowledge is the bridge to your dreams.<br>
-          Unlock the full book and take the first step toward greatness.</p>
-          <div class="button-group">
-            <a href="https://naikskillacademy.odoo.com/enrollment" class="btn enroll">Enroll Now</a>
-            <a href="https://wa.me/918895478287?text=HI!!%20I%20want%20to%20Enroll" class="btn contact">Contact Us</a>
-          </div>
-        </div>
-      </div>
-    `;
-    pages.push(lockWrapper);
+  // ❌ Show purchase message if free user
+  if (limit < totalPages) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "page";
+    messageDiv.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;background:#222;color:#fff;font-size:20px;text-align:center;padding:20px;">
+        You have reached the free limit (10 pages).<br>
+        <strong>Purchase to unlock full book.</strong>
+      </div>`;
+    pages.push(messageDiv);
   }
 
   flipbook.innerHTML = "";
@@ -169,7 +174,8 @@ function renderPage(num, canvas) {
 
 // ✅ Page Info
 function updatePageInfo(pageNum) {
-  pageInfo.textContent = `${pageNum} / ${userPaid ? totalPages : Math.min(10, totalPages)}`;
+  const limit = Math.min(totalPages, maxPagesAllowed);
+  pageInfo.textContent = `${pageNum} / ${limit}`;
 }
 
 // ✅ Navigation
