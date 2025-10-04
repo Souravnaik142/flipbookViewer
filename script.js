@@ -133,25 +133,27 @@ async function renderPages() {
     pages.push(messageDiv);
   }*/
 
-  if (limit < totalPages) {
-    const lockWrapper = document.createElement("div");
-    lockWrapper.className = "page";
-    lockWrapper.innerHTML = `
-      <div class="locked-screen">
-        <div class="locked-content">
-          <img src="children-future.png" alt="Children towards future" class="future-img">
-          <h1>Your Path to Future Success 🚀</h1>
-          <p>Knowledge is the bridge to your dreams.<br>
-          Unlock the full book and take the first step toward greatness.</p>
-          <div class="button-group">
-            <a href="https://naikskillacademy.odoo.com/enrollment" class="btn enroll">Enroll Now</a>
-            <a href="https://wa.me/918895478287?text=HI!!%20I%20want%20to%20Enroll" class="btn contact">Contact Us</a>
-          </div>
+if (limit < totalPages) {
+  const lockWrapper = document.createElement("div");
+  lockWrapper.className = "page";
+  lockWrapper.innerHTML = `
+    <div class="locked-screen">
+      <div class="locked-content">
+        <img src="children-future.png" alt="Children towards future" class="future-img">
+        <h1>Your Path to Future Success 🚀</h1>
+        <p class="inspire-text">
+          "Knowledge is the bridge to your dreams.  
+          Unlock the full book and take the first step toward greatness."
+        </p>
+        <div class="button-group">
+          <a href="https://naikskillacademy.odoo.com/enrollment" class="btn enroll">✨ Enroll Now</a>
+          <a href="https://wa.me/918895478287?text=HI!!%20I%20want%20to%20Enroll" class="btn contact">💬 Contact Us</a>
         </div>
       </div>
-    `;
-    pages.push(lockWrapper);
-  }
+    </div>
+  `;
+  pages.push(lockWrapper);
+}
 
   flipbook.innerHTML = "";
   if (pageFlip) pageFlip.destroy();
