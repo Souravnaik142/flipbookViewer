@@ -133,7 +133,7 @@ async function renderPages() {
     pages.push(messageDiv);
   }*/
 
-  if (!userPaid && totalPages > 10) {
+  if (limit < totalPages) {
     const lockWrapper = document.createElement("div");
     lockWrapper.className = "page";
     lockWrapper.innerHTML = `
