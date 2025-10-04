@@ -18,13 +18,13 @@ body {
 .future-img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* cover full screen */
-  filter: brightness(0.6); /* darken a little so text pops */
+  object-fit: cover;
+  filter: brightness(0.6); /* darken background */
 }
 
 .overlay-content {
   position: absolute;
-  top: 50%;
+  top: 40%; /* roughly middle */
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
@@ -40,13 +40,15 @@ body {
 
 .overlay-content p {
   font-size: 1.2rem;
-  margin-bottom: 25px;
   line-height: 1.5;
 }
 
-.button-group {
+.bottom-buttons {
+  position: absolute;
+  bottom: 40px; /* distance from bottom */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: center;
   gap: 20px;
 }
 
@@ -76,8 +78,6 @@ body {
 .btn.contact:hover {
   background: #0056b3;
 }
-
-
 
 .navbar {
   background: #222;
