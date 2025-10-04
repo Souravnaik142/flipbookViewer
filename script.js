@@ -1,4 +1,4 @@
-// Firebase Config
+// 🔹 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBzEhgiJXph4CbXBBwxcNU3MjDCHc0rWZo",
   authDomain: "flipbook-7540.firebaseapp.com",
@@ -8,97 +8,145 @@ const firebaseConfig = {
   appId: "1:430421789223:web:fdca22655543a637bf9c02",
   measurementId: "G-2T9KF0DXL5"
 };
-
-// Init Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
-const authSection = document.getElementById("authSection");
-const flipbookSection = document.getElementById("flipbookSection");
+// 🔹 Elements
+const pageInfo = document.getElementById("pageInfo");
+const flipSound = document.getElementById("flipSound");
+const flipbook = document.getElementById("flipbook");
+const loader = document.getElementById("loader");
+const loaderText = document.getElementById("loaderText");
+const welcomeUser = document.getElementById("welcomeUser");
+const logoutBtn = document.getElementById("logoutBtn");
+const loginOverlay = document.getElementById("loginOverlay");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
+const signupBtn = document.getElementById("signupBtn");
 const authMessage = document.getElementById("authMessage");
 
-const pageInfo = document.getElementById("pageInfo");
-const flipbook = document.getElementById("flipbook");
-let pdfDoc = null, totalPages = 0, currentPage = 1;
-const MAX_FREE_PAGES = 10;
+// 🔹 PDF / Flipbook
+let pdfDoc = null, totalPages = 0, scale = 1.2, soundOn = true, pageFlip = null;
 
-// Load PDF.js
-const pdfUrl = "yourcourse.pdf"; // replace with your GitHub-hosted PDF
-
-// Auth
-document.getElementById("signupBtn").addEventListener("click", () => {
-  auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value)
-    .then(() => authMessage.textContent = "✅ Signup successful!")
-    .catch(err => authMessage.textContent = "❌ " + err.message);
-});
-
-document.getElementById("loginBtn").addEventListener("click", () => {
+// ✅ Auth
+loginBtn.addEventListener("click", () => {
   auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
-    .then(() => {
-      authMessage.textContent = "✅ Login successful!";
-    })
-    .catch(err => authMessage.textContent = "❌ " + err.message);
+    .catch(err => authMessage.textContent = err.message);
+});
+signupBtn.addEventListener("click", () => {
+  auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value)
+    .catch(err => authMessage.textContent = err.message);
+});
+logoutBtn.addEventListener("click", () => {
+  auth.signOut().then(() => location.reload());
 });
 
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  auth.signOut();
-});
-
-// State listener
+// ✅ Auth State
 auth.onAuthStateChanged(user => {
   if (user) {
-    authSection.style.display = "none";
-    flipbookSection.style.display = "block";
-    loadPdf();
+    loginOverlay.style.display = "none";
+    welcomeUser.textContent = `Welcome, ${user.email.split("@")[0]}`;
+    logoutBtn.style.display = "inline-block";
+    loadPDF();
   } else {
-    authSection.style.display = "block";
-    flipbookSection.style.display = "none";
+    loginOverlay.style.display = "flex";
+    welcomeUser.textContent = "";
+    logoutBtn.style.display = "none";
   }
 });
 
-// Load PDF
-function loadPdf() {
-  pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+// ✅ Load PDF
+function loadPDF() {
+  pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
     pdfDoc = pdf;
     totalPages = pdf.numPages;
-    renderPage(currentPage);
+    renderPages();
   });
 }
 
-function renderPage(num) {
-  if (num > MAX_FREE_PAGES) {
-    flipbook.innerHTML = `<p style="color:red;">🔒 Please pay to unlock full access.</p>`;
-    pageInfo.textContent = `${MAX_FREE_PAGES} / ${totalPages}`;
-    return;
+// ✅ Render all pages
+async function renderPages() {
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "page";
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "pdf-page";
+    wrapper.appendChild(canvas);
+
+    await renderPage(i, canvas);
+    pages.push(wrapper);
+
+    loaderText.textContent = `Loading page ${i} of ${totalPages}...`;
   }
 
-  pdfDoc.getPage(num).then(page => {
-    const viewport = page.getViewport({ scale: 1.2 });
-    const canvas = document.createElement("canvas");
+  flipbook.innerHTML = "";
+  if (pageFlip) pageFlip.destroy();
+
+  pageFlip = new St.PageFlip(flipbook, {
+    width: 500,
+    height: 700,
+    size: "stretch",
+    showCover: true,
+    useMouseEvents: true,
+    mobileScrollSupport: true,
+  });
+
+  pageFlip.loadFromHTML(pages);
+  updatePageInfo(1);
+
+  pageFlip.on("flip", (e) => {
+    updatePageInfo(e.data + 1);
+    if (soundOn) flipSound.play();
+  });
+
+  loader.classList.add("fade-out");
+  setTimeout(() => loader.style.display = "none", 800);
+}
+
+function renderPage(num, canvas) {
+  return pdfDoc.getPage(num).then(page => {
+    const viewport = page.getViewport({ scale: scale });
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-
-    page.render({ canvasContext: ctx, viewport: viewport });
-
-    flipbook.innerHTML = "";
-    flipbook.appendChild(canvas);
-
-    pageInfo.textContent = `${num} / ${totalPages}`;
+    return page.render({ canvasContext: ctx, viewport: viewport }).promise;
   });
 }
 
-// Navigation
+// ✅ Page Info
+function updatePageInfo(pageNum) {
+  pageInfo.textContent = `${pageNum} / ${totalPages}`;
+}
+
+// ✅ Navigation
 document.getElementById("prevPage").addEventListener("click", () => {
-  if (currentPage <= 1) return;
-  currentPage--;
-  renderPage(currentPage);
+  if (pageFlip) pageFlip.flipPrev();
+});
+document.getElementById("nextPage").addEventListener("click", () => {
+  if (pageFlip) pageFlip.flipNext();
 });
 
-document.getElementById("nextPage").addEventListener("click", () => {
-  if (currentPage >= totalPages) return;
-  currentPage++;
-  renderPage(currentPage);
+// ✅ Fullscreen
+document.getElementById("fullscreen").addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+// ✅ Sound toggle
+document.getElementById("soundToggle").addEventListener("click", () => {
+  soundOn = !soundOn;
+  document.getElementById("soundToggle").textContent = soundOn ? "🔊" : "🔇";
+});
+
+// ✅ Keyboard
+document.addEventListener("keydown", (e) => {
+  if (!pageFlip) return;
+  if (e.key === "ArrowLeft") pageFlip.flipPrev();
+  if (e.key === "ArrowRight") pageFlip.flipNext();
 });
