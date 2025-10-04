@@ -141,13 +141,13 @@ if (limit < totalPages) {
   <img src="children-future.png" alt="Children towards future" class="future-img">
 
   <div class="overlay-content">
-    
-    <p>"Knowledge is the bridge to your dreams."</p>
+   
+    <p>"Knowledge is the bridge to your dreams"</p>
+  </div>
 
-    <div class="button-group">
-      <a href="https://naikskillacademy.odoo.com/enrollment" class="btn enroll">✨ Enroll Now</a>
-      <a href="https://wa.me/918895478287?text=HI!!%20I%20want%20to%20Enroll" class="btn contact">💬 Contact Us</a>
-    </div>
+  <div class="button-group bottom-buttons">
+    <a href="https://naikskillacademy.odoo.com/enrollment" class="btn enroll">✨ Enroll Now</a>
+    <a href="https://wa.me/918895478287?text=HI!!%20I%20want%20to%20Enroll" class="btn contact">💬 Contact Us</a>
   </div>
 </div>
 
