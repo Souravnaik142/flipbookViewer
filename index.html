@@ -2,45 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Flipbook Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Flipbook</title>
   <link rel="stylesheet" href="style.css">
-
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
-
-  <!-- StPageFlip -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css" />
-  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
 <body>
-  <!-- 🔐 Auth Container -->
-  <div id="authContainer">
-    <h2>Login / Sign Up</h2>
+  <div id="authSection">
+    <h2>Login / Signup</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
     <button id="signupBtn">Sign Up</button>
-    <button id="signinBtn">Sign In</button>
+    <button id="loginBtn">Login</button>
+    <p id="authMessage"></p>
   </div>
 
-  <!-- 📖 Flipbook Viewer -->
-  <div id="viewer" style="display:none;">
-    <nav class="navbar">
+  <div id="flipbookSection" style="display:none;">
+    <div id="controls">
       <button id="prevPage">⬅ Prev</button>
       <span id="pageInfo"></span>
       <button id="nextPage">Next ➡</button>
-      <button id="fullscreen">⛶</button>
-      <button id="logoutBtn">🚪 Logout</button>
-    </nav>
-    <div id="flipbook" class="flipbook"></div>
-    <audio id="flipSound" src="page-flip.wav"></audio>
+      <button id="logoutBtn">Logout</button>
+    </div>
+    <div id="flipbook"></div>
   </div>
 
-  <!-- Firebase -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
 
-  <!-- Config + Logic -->
-  <script src="keys.js"></script>
-  <script type="module" src="script.js"></script>
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <!-- Your Script -->
+  <script src="script.js"></script>
 </body>
 </html>
