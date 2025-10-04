@@ -24,12 +24,12 @@ body {
 
 .overlay-content {
   position: absolute;
-  top: 40%; /* roughly middle */
+  top: 60%; /* roughly middle */
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
   color: #fff;
-  max-width: 80%;
+  max-width: 90%;
 }
 
 .overlay-content h1 {
