@@ -2,48 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Flipbook PDF Viewer</title>
+  <title>Flipbook Viewer</title>
   <link rel="stylesheet" href="style.css">
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
 
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
-  <!-- PageFlip -->
+
+  <!-- StPageFlip -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css" />
   <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
 <body>
+  <!-- 🔐 Auth Container -->
   <div id="authContainer">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" required><br>
-      <input type="password" id="loginPassword" placeholder="Password" required><br>
-      <button type="submit">Login</button>
-    </form>
-
-    <h2>Signup</h2>
-    <form id="signupForm">
-      <input type="email" id="signupEmail" placeholder="Email" required><br>
-      <input type="password" id="signupPassword" placeholder="Password" required><br>
-      <button type="submit">Signup</button>
-    </form>
-
-    <p id="errorMsg"></p>
+    <h2>Login / Sign Up</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="signupBtn">Sign Up</button>
+    <button id="signinBtn">Sign In</button>
   </div>
 
+  <!-- 📖 Flipbook Viewer -->
   <div id="viewer" style="display:none;">
-    <div class="navbar">
-      <span id="pageInfo">0 / 0</span>
-      <button id="prevPage">⬅</button>
-      <button id="nextPage">➡</button>
-      <button id="logoutBtn">Logout</button>
-    </div>
-    <div id="flipbook"></div>
-    <audio id="flipSound" src="flip.mp3" preload="auto"></audio>
+    <nav class="navbar">
+      <button id="prevPage">⬅ Prev</button>
+      <span id="pageInfo"></span>
+      <button id="nextPage">Next ➡</button>
+      <button id="fullscreen">⛶</button>
+      <button id="logoutBtn">🚪 Logout</button>
+    </nav>
+    <div id="flipbook" class="flipbook"></div>
+    <audio id="flipSound" src="page-flip.wav"></audio>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Firebase -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+
+  <!-- Config + Logic -->
+  <script src="keys.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
