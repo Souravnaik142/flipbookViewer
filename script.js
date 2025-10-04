@@ -1,78 +1,57 @@
-// ✅ Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyBzEhgiJXph4CbXBBwxcNU3MjDCHc0rWZo",
-  authDomain: "flipbook-7540.firebaseapp.com",
-  projectId: "flipbook-7540",
-  storageBucket: "flipbook-7540.firebasestorage.app",
-  messagingSenderId: "430421789223",
-  appId: "1:430421789223:web:fdca22655543a637bf9c02",
-  measurementId: "G-2T9KF0DXL5"
-};
-firebase.initializeApp(firebaseConfig);
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut }
+from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-const auth = firebase.auth();
+import { firebaseConfig } from "./keys.js";
 
-let pdfDoc = null,
-    totalPages = 0,
-    scale = 1.2,
-    pageFlip = null,
-    isPaidUser = false;
+// ✅ Init Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 // Elements
 const authContainer = document.getElementById("authContainer");
 const viewer = document.getElementById("viewer");
-const errorMsg = document.getElementById("errorMsg");
 const flipbook = document.getElementById("flipbook");
-const flipSound = document.getElementById("flipSound");
 const pageInfo = document.getElementById("pageInfo");
+const flipSound = document.getElementById("flipSound");
 
-// ✅ Signup
-document.getElementById("signupForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("signupEmail").value;
-  const password = document.getElementById("signupPassword").value;
+let pdfDoc = null, totalPages = 0, scale = 1.2, pageFlip = null, soundOn = true;
 
-  try {
-    await auth.createUserWithEmailAndPassword(email, password);
-    alert("✅ Signup successful! Please login.");
-  } catch (err) {
-    errorMsg.textContent = "❌ " + err.message;
-  }
+// ---------------- AUTH ---------------- //
+document.getElementById("signupBtn").addEventListener("click", () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(userCredential => {
+      alert("✅ Signed up as " + userCredential.user.email);
+      authContainer.style.display = "none";
+      viewer.style.display = "block";
+      loadPDF();
+    })
+    .catch(err => alert("❌ " + err.message));
 });
 
-// ✅ Login
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
-
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-
-    // Check JSON for paid status
-    fetch("users.json")
-      .then(res => res.json())
-      .then(users => {
-        isPaidUser = users[email] && users[email].paid === true;
-
-        authContainer.style.display = "none";
-        viewer.style.display = "block";
-
-        loadPDF();
-      });
-  } catch (err) {
-    errorMsg.textContent = "❌ " + err.message;
-  }
+document.getElementById("signinBtn").addEventListener("click", () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  signInWithEmailAndPassword(auth, email, password)
+    .then(userCredential => {
+      alert("✅ Welcome back " + userCredential.user.email);
+      authContainer.style.display = "none";
+      viewer.style.display = "block";
+      loadPDF();
+    })
+    .catch(err => alert("❌ " + err.message));
 });
 
-// ✅ Logout
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await auth.signOut();
-  viewer.style.display = "none";
-  authContainer.style.display = "block";
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  signOut(auth).then(() => {
+    authContainer.style.display = "block";
+    viewer.style.display = "none";
+  });
 });
 
-// ✅ Load PDF
+// ---------------- PDF + FLIPBOOK ---------------- //
 function loadPDF() {
   pdfjsLib.getDocument("yourcourse.pdf").promise.then(pdf => {
     pdfDoc = pdf;
@@ -81,32 +60,25 @@ function loadPDF() {
   });
 }
 
-// ✅ Render Pages
 async function renderPages() {
   const pages = [];
-  const maxPages = isPaidUser ? totalPages : 10;
-
-  for (let i = 1; i <= maxPages; i++) {
+  for (let i = 1; i <= totalPages; i++) {
     const wrapper = document.createElement("div");
     wrapper.className = "page";
 
     const canvas = document.createElement("canvas");
-    canvas.className = "pdf-page";
     wrapper.appendChild(canvas);
-
     await renderPage(i, canvas);
+
     pages.push(wrapper);
   }
 
   flipbook.innerHTML = "";
-
   if (pageFlip) pageFlip.destroy();
 
   pageFlip = new St.PageFlip(flipbook, {
-    width: 500,
-    height: 700,
-    size: "stretch",
-    showCover: true,
+    width: 500, height: 700, size: "stretch",
+    showCover: true, useMouseEvents: true, mobileScrollSupport: true
   });
 
   pageFlip.loadFromHTML(pages);
@@ -114,7 +86,7 @@ async function renderPages() {
 
   pageFlip.on("flip", (e) => {
     updatePageInfo(e.data + 1);
-    flipSound.play();
+    if (soundOn) flipSound.play();
   });
 }
 
@@ -124,19 +96,18 @@ function renderPage(num, canvas) {
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-
     return page.render({ canvasContext: ctx, viewport: viewport }).promise;
   });
 }
 
 function updatePageInfo(pageNum) {
-  pageInfo.textContent = `${pageNum} / ${isPaidUser ? totalPages : 10}`;
+  pageInfo.textContent = `${pageNum} / ${totalPages}`;
 }
 
-// ✅ Navigation
-document.getElementById("prevPage").addEventListener("click", () => {
-  if (pageFlip) pageFlip.flipPrev();
-});
-document.getElementById("nextPage").addEventListener("click", () => {
-  if (pageFlip) pageFlip.flipNext();
+// Controls
+document.getElementById("prevPage").addEventListener("click", () => pageFlip.flipPrev());
+document.getElementById("nextPage").addEventListener("click", () => pageFlip.flipNext());
+document.getElementById("fullscreen").addEventListener("click", () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
 });
