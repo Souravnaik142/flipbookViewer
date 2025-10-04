@@ -137,10 +137,10 @@ if (limit < totalPages) {
   const lockWrapper = document.createElement("div");
   lockWrapper.className = "page";
   lockWrapper.innerHTML = `
-    <div class="locked-screen">
-  <div class="locked-content">
-    <img src="children-future.png" alt="Children towards future" class="future-img">
+<div class="locked-screen">
+  <img src="children-future.png" alt="Children towards future" class="future-img">
 
+  <div class="overlay-content">
     <h1>Your Path to Future Success 🚀</h1>
     <p>"Knowledge is the bridge to your dreams. Unlock the full book and take the first step toward greatness."</p>
 
@@ -150,6 +150,7 @@ if (limit < totalPages) {
     </div>
   </div>
 </div>
+
   `;
   pages.push(lockWrapper);
 }
