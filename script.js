@@ -143,6 +143,7 @@ if (limit < totalPages) {
   <div class="overlay-content">
    
     <p>"Knowledge is the bridge to your dreams"</p>
+    <p>"Unlock the full book and take first step towards success."</p>
   </div>
 
   <div class="button-group bottom-buttons">
