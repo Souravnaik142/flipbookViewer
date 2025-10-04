@@ -1,4 +1,5 @@
-{
-  "souravnaik142@gmail.com": { "paid": true },
-  "test@gmail.com": { "paid": false }
-}
+
+[
+  { "email": "souravnaik142@gmail.com", "paid": true },
+  { "email": "test2@gmail.com", "paid": false }
+]
