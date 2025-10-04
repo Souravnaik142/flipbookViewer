@@ -1,34 +1,128 @@
 body {
-  font-family: Arial, sans-serif;
-  text-align: center;
   margin: 0;
-  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
 }
 
-#authSection, #flipbookSection {
-  max-width: 600px;
-  margin: auto;
+.navbar {
+  background: #222;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
-input {
+#welcomeUser {
+  margin-left: auto;
+  font-size: 14px;
+  color: #aaa;
+}
+
+#logoutBtn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-weight: bold;
+}
+#logoutBtn:hover {
+  background: #c0392b;
+}
+
+.flipbook {
+  margin-top: 10px;
+  width: 90%;
+  height: 85%;
+}
+
+.page {
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.pdf-page {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Loader */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+.loader-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 6px solid #444;
+  border-top: 6px solid #00ffcc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+#loaderText {
+  font-size: 18px;
+  margin-top: 10px;
+}
+
+/* Login Overlay */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.login-box {
+  background: #222;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+}
+.login-box input {
   display: block;
   margin: 10px auto;
   padding: 8px;
-  width: 80%;
+  width: 200px;
+  border: none;
+  border-radius: 4px;
 }
-
-button {
+.login-box button {
   margin: 5px;
-  padding: 10px 20px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
 }
-
-#controls {
-  margin-bottom: 15px;
-}
-
-canvas {
-  border: 1px solid #ccc;
-  margin: 5px auto;
-  display: block;
-}
+#loginBtn { background: #00cc88; color: white; }
+#signupBtn { background: #3498db; color: white; }
+#authMessage { margin-top: 10px; font-size: 14px; color: #f88; }
